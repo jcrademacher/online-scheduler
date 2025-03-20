@@ -1,0 +1,20 @@
+$primary: #003f2e;
+$secondary: #5f7e70;
+$info: #003f2e;
+$highlight: #ffe7c4;
+$program: #e1f7df;
+$element: $highlight;
+$time: rgb(226, 226, 226);
+$global: #194d33;
+// $light: white;
+
+:export {
+    primary: $primary;
+    secondary: $secondary;
+    info: $info;
+    highlight: $highlight;
+    element: $element;
+    program: $program;
+    time: $time;
+    global: $global;
+}

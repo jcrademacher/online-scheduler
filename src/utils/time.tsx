@@ -23,6 +23,7 @@ for (let i = 0; i < 6; i++) {
 
 export const timeFormatKey = (time: moment.Moment) => time.toISOString();
 export const timeFormatLocal = (time: moment.Moment) => time.clone().tz(TIMEZONE).format("h:mm A");
+export const timeDateDummy = (time?: string) => moment.tz(`${time} 2024-06-23`, TIMEZONE);
 
 export function createTime(t?: string | undefined) {
     return t ? moment.tz(t,TIMEZONE) : moment();

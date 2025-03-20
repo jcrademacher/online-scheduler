@@ -12,7 +12,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend'
 // console.log(getTimes());
 
 // const times = range(700,2030,30);
-
+import colors from '../../styles/colors.module.scss';
 import { ScheduledActivity, Workarea, addActivity, removeActivity, updateActivity } from './activities';
 
 import {
@@ -253,7 +253,8 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
                 startTime: startTime.toISOString(),
                 duration: duration,
                 name: "",
-                scheduleId: scheduleId
+                scheduleId: scheduleId,
+                color: colors.globalAct
             };
 
             // console.log(newAct);
@@ -273,6 +274,7 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
         const gacts = { ...localSch.globalActs };
         // newGacts[newGact.startTime] = newGact;
         updateActivity(newGact, gacts);
+        console.log(newGact);
         setLocalSch({ ...localSch, globalActs: gacts });
     }
 

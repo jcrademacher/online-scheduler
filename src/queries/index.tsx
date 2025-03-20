@@ -58,6 +58,6 @@ export function useAllActivitiesQuery(id: string | undefined, protos: ActivityPr
         queryFn: async () => getAllActivitiesMapped(id as string,protos as ActivityPrototypeMap),
         enabled: !!protos && !!id,
         staleTime: 60*1000,
-        refetchOnWindowFocus: true
+        refetchOnWindowFocus: false
     })
 }

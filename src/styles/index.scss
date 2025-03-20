@@ -8,7 +8,7 @@
 //   "secondary":  #5f7e70
 // );
 
-@use 'colors.scss';
+@use 'colors.module.scss';
 // $primary: map-get($map: "theme-colors", $key: "primary");
 
 /* import bootstrap to set changes */

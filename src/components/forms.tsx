@@ -6,7 +6,8 @@ export type ScheduleSettings = {
     endDate?: string,
     startTime?: string,
     endTime?: string,
-    name?: string
+    name?: string,
+    numLegs?: number
 }
 
 export function convertFormToDates(data: ScheduleSettings) {

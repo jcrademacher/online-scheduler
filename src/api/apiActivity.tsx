@@ -164,14 +164,7 @@ export async function saveActivities(oldActs: LocalIDMap<LocalLegActivity>| unde
             // console.log(act);
 
             if(act.id) {
-                retval = await client.models.LegActivity.update({
-                    id: act.id,
-                    activityPrototypeId: act.activityPrototypeId,
-                    startTime: act.startTime,
-                    supportName: act.supportName,
-                    shadow: act.shadow,
-                    leg: act.leg
-                });
+                retval = await client.models.LegActivity.update({ ...act, id: act.id});
 
                 // console.log('creating: ',retval.data);
             }
@@ -197,16 +190,9 @@ export async function saveActivities(oldActs: LocalIDMap<LocalLegActivity>| unde
         }
 
         if(gact.id) {
-            retval = await client.models.GlobalActivity.update({
-                id: gact.id,
-                startTime: gact.startTime,
-                name: gact.name,
-                duration: gact.duration,
-                scheduleId: gact.scheduleId
-            });
+            retval = await client.models.GlobalActivity.update({ ...gact, id: gact.id });
         }
         else {
-            console.log("creating global activity");
             retval = await client.models.GlobalActivity.create(gact);
         }
 

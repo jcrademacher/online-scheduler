@@ -3,8 +3,7 @@ import { AllActivities } from '../../api/apiActivity';
 import { Schedule } from '../../api/apiSchedule';
 import { ActivityPrototype, ActivityPrototypeMap } from '../../api/apiActivityPrototype';
 import { createTime, getSlotDiff, getTimeSlots, timeFormatKey, timeFormatLocal } from '../../utils/time';
-import { create } from 'lodash';
-import { act } from 'react';
+import colors from '../../styles/colors.module.scss';
 
 export async function exportScheduleAsXLSX(protos: ActivityPrototypeMap, activities: AllActivities, schedule: Schedule) {
     // Create a new workbook
@@ -37,20 +36,22 @@ export async function exportScheduleAsXLSX(protos: ActivityPrototypeMap, activit
             }))
         ];
 
+
+
         // Style headers
         worksheet.getRow(1).eachCell((cell, colNumber) => {
             if (colNumber === 1) {
                 cell.fill = {
                     type: 'pattern',
                     pattern: 'solid',
-                    fgColor: { argb: 'FFD3D3D3' } // Light gray
+                    fgColor: { argb: colors.time } // Light gray
                 };
             } else {
                 const prototype = sortedPrototypes[colNumber - 2];
                 cell.fill = {
                     type: 'pattern',
                     pattern: 'solid',
-                    fgColor: { argb: prototype.type === 'element' ? 'FFFFE4B5' : 'FF90EE90' } // Light orange or light green
+                    fgColor: { argb: prototype.type === 'element' ? colors.program : colors.element } // Light orange or light green
                 };
             }
             cell.alignment = { horizontal: 'center' };
@@ -68,7 +69,7 @@ export async function exportScheduleAsXLSX(protos: ActivityPrototypeMap, activit
             timeCell.fill = {
                 type: 'pattern',
                 pattern: 'solid',
-                fgColor: { argb: 'FFD3D3D3' } // Light gray
+                fgColor: { argb: colors.time } // Light gray
             };
 
             if (timeKey in activities.globalActs) {

@@ -30,9 +30,9 @@ function NavDropdown({ title, items }: DropdownProps) {
             </Dropdown.Toggle>
 
             <Dropdown.Menu>
-                {items.map(({ name, disabled, action }) => {
+                {items.map(({ name, disabled, action },i) => {
                     if (!name && !action && !disabled) {
-                        return <Dropdown.Divider/>
+                        return <Dropdown.Divider key={i}/>
                     }
                     else {
                         return <Dropdown.Item disabled={disabled} onClick={action} key={name}>{name}</Dropdown.Item>

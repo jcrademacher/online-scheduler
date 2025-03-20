@@ -1,5 +1,5 @@
 import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
-import { analyze } from "../functions/analyze/resource";
+// import { analyze } from "../functions/analyze/resource";
 
 /*== STEP 1 ===============================================================
 The section below creates a Todo database table with a "content" field. Try
@@ -16,13 +16,17 @@ const schema = a.schema({
     // AnalysisResult: a.customType({
 
     // }),
+    Analysis: a.customType({
+        enabled: a.boolean().required(),
+        raise: a.enum(["INFO", "WARNING", "ERROR"])
+    }),
 
-    analyze: a
-        .query()
-        .arguments({ scheduleId: a.string().required() })
-        .returns(a.string())
-        .handler(a.handler.function(analyze))
-        .authorization((allow) => [allow.authenticated()]),
+    // analyze: a
+    //     .query()
+    //     .arguments({ scheduleId: a.string().required() })
+    //     .returns(a.string())
+    //     .handler(a.handler.function(analyze))
+    //     .authorization((allow) => [allow.authenticated()]),
 
     Schedule: a
         .model({
@@ -30,7 +34,16 @@ const schema = a.schema({
             startDates: a.datetime().required().array().required(),
             endDates: a.datetime().required().array().required(),
             activityPrototypes: a.hasMany('ActivityPrototype', 'scheduleId'),
-            globalActivities: a.hasMany('GlobalActivity', 'scheduleId')
+            globalActivities: a.hasMany('GlobalActivity', 'scheduleId'),
+            numLegs: a.integer().required().default(12),
+            analyses: a.customType({
+                repetition: a.ref("Analysis"),
+                travelTime: a.ref("Analysis"),
+                overlap: a.ref("Analysis"),
+                requirement: a.ref("Analysis"),
+                preferredDays: a.ref("Analysis"),
+                density: a.ref("Analysis")
+            })
         })
         .authorization((allow) => [
             allow.authenticated().to(['create', 'read']),
@@ -54,7 +67,8 @@ const schema = a.schema({
             name: a.string().required(),
             duration: a.float().required(),
             scheduleId: a.id().required(),
-            schedule: a.belongsTo('Schedule', 'scheduleId')
+            schedule: a.belongsTo('Schedule', 'scheduleId'),
+            color: a.string().required()
         })
         .authorization((allow) => [allow.authenticated()]),
 
@@ -73,7 +87,7 @@ const schema = a.schema({
             isRequired: a.boolean().required()
         })
         .authorization((allow) => [allow.authenticated()])
-}).authorization((allow) => [allow.resource(analyze)]);
+});
 
 export type Schema = ClientSchema<typeof schema>;
 

@@ -56,7 +56,7 @@ export function FileOpenModal({ handleCancel }: FileOpenModalProps) {
 
     const handleOpen = () => {
         setOpening(true);
-
+        
         handleCancel();
         navigateToSchedule(navigate, selectedId);
     }

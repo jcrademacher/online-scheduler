@@ -28,6 +28,11 @@ import { range } from 'lodash';
 
 import { useDrag, useDrop } from 'react-dnd';
 
+import colors from '../../styles/colors.module.scss';
+
+import { useScheduleIDMatch } from '../../utils/router';
+import { useScheduleQuery } from '../../queries';
+
 export function addActivity<T extends Activity>(newAct: T, object: TimeMap<T>) {
     object[newAct.startTime] = { ...newAct };
 }
@@ -207,11 +212,21 @@ export interface ScheduledActivityProps {
     handleDelete: (newAct: LocalLegActivity) => void
 }
 
+import { CompactPicker } from 'react-color';
+
 export function ScheduledActivity({ activeAct, timeIndex, duration, groupSize, handleDelete, handleSave }: ScheduledActivityProps) {
+    const match = useScheduleIDMatch();
+    const scheduleId = match?.params.scheduleId as string;
+
+    const schQuery = useScheduleQuery(scheduleId);
+
+
     type ActivityOptions = {
         leg: number[],
         shadow: boolean
     };
+
+    let numLegs = schQuery.data?.numLegs ?? 12;
 
     let di = duration * 2;
     let gridRow = `${timeIndex + 2} / span ${di}`;
@@ -219,7 +234,7 @@ export function ScheduledActivity({ activeAct, timeIndex, duration, groupSize, h
 
     // console.log(leg);
 
-    const notScheduled = leg.some((el) => el < 1 || el > 12) || leg.length !== groupSize;
+    const notScheduled = leg.some((el) => el < 1 || el > numLegs) || leg.length !== groupSize;
 
     // this state determines whether or not the dialog opens upon initial scheduling of the activity
     const [isOpen, setIsOpen] = useState(false);
@@ -328,7 +343,7 @@ export function ScheduledActivity({ activeAct, timeIndex, duration, groupSize, h
                                 <Form.Control {...register(`leg.${i}`, { 
                                         valueAsNumber: true, 
                                         required: true, 
-                                        validate: (val) => val > 0 && val <= 12 && Number.isInteger(val)
+                                        validate: (val) => val > 0 && val <= numLegs && Number.isInteger(val)
                                     })}
                                     isInvalid={!!(errors?.leg ? errors.leg[i] : false)}
                                     type="number"
@@ -357,6 +372,7 @@ export function ScheduledActivity({ activeAct, timeIndex, duration, groupSize, h
                                 </Button>
                             </div>
                         </Form>
+                        
                     </div>
                     <FloatingArrow ref={arrowRef} context={context} />
                 </div>
@@ -377,15 +393,21 @@ export function ScheduledGlobalActivity({ activeAct, handleSave, handleDelete, t
     let gridRow = `${timeIndex + 2} / span ${activeAct.duration * 2}`;
 
     type GlobalActivityOptions = {
-        name: string
+        name: string,
+        color: string
     };
 
     const {
         register,
         handleSubmit,
-        formState: { errors },
-        reset
-    } = useForm<GlobalActivityOptions>({ values: { name: activeAct.name ? activeAct.name : "" } });
+        formState: { errors, dirtyFields},
+        reset,
+        watch,
+        setValue
+    } = useForm<GlobalActivityOptions>({ values: { color: activeAct.color ?? colors.global, name: activeAct.name ? activeAct.name : "" } });
+
+    // console.log(dirtyFields);
+    // }
 
     const arrowRef = useRef(null);
 
@@ -413,7 +435,7 @@ export function ScheduledGlobalActivity({ activeAct, handleSave, handleDelete, t
     }
 
     const onClose = () => {
-        reset(activeAct);
+        reset();
     }
 
     const [, drag] = useDrag(() => ({
@@ -454,16 +476,28 @@ export function ScheduledGlobalActivity({ activeAct, handleSave, handleDelete, t
         dismiss
     ]);
 
+    const colorRegister = register('color', {required: true});
+
+    // useEffect(() => {
+    //     const { unsubscribe } = watch((value) => {
+    //       console.log(value)
+    //     })
+    //     return () => unsubscribe()
+    //   }, [watch]);
+
+    const watchedColor = watch("color");
+    const watchedName = watch("name");
+
     return (
         <>
             <div
                 className="global-activity"
-                style={{ gridColumn: `2 / span ${span}`, gridRow }}
+                style={{ gridColumn: `2 / span ${span}`, gridRow, backgroundColor: watchedColor}}
                 ref={(el) => { refs.setReference(el); drag(el) }}
                 {...getReferenceProps()}
             // key={}
             >
-                {activeAct.name}
+                {watchedName}
             </div>
             {isOpen && (
                 <div
@@ -481,6 +515,16 @@ export function ScheduledGlobalActivity({ activeAct, handleSave, handleDelete, t
                                 placeholder="Name"
                                 autoFocus
                             />
+                            <br/>
+                            
+                            <CompactPicker
+                                ref={colorRegister.ref}
+                                onChange={(color: { hex: string },_: any) => setValue("color",color.hex)}
+                                color={watchedColor}
+                                triangle="hide"
+                            />
+                   
+                            
 
                             <div id="form-footer">
                                 <Button variant="primary" type="submit">
