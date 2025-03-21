@@ -8,7 +8,6 @@ interface NavBarProps {
     signOut: UseAuthenticator["signOut"] | undefined;
     handleFileNew: () => void;
     handleFileOpen: () => void;
-    handleSave: () => Promise<void>
 }
 
 type DropdownOptions = {
@@ -44,14 +43,13 @@ function NavDropdown({ title, items }: DropdownProps) {
     );
 }
 
-import { useNavigate } from 'react-router-dom';
 import { useScheduleIDMatch } from '../utils/router';
 import { useFileContext } from './file/context-provider';
 
-function NavBar({ signOut, handleFileNew, handleFileOpen, handleSave }: NavBarProps) {
+function NavBar({ signOut, handleFileNew, handleFileOpen }: NavBarProps) {
 
     const match = useScheduleIDMatch();
-    const navigate = useNavigate();
+    
 
     const scheduleId = match?.params.scheduleId;
 
@@ -62,7 +60,7 @@ function NavBar({ signOut, handleFileNew, handleFileOpen, handleSave }: NavBarPr
     const fileContext = useFileContext();
 
     const exportAction = async () => {
-        await handleSave();
+        await fileContext.saveSchedule();
     
         if (actsQuery.data && schQuery.data && actProtoQuery.data) {
             exportScheduleAsXLSX(actProtoQuery.data, actsQuery.data, schQuery.data);
@@ -73,13 +71,11 @@ function NavBar({ signOut, handleFileNew, handleFileOpen, handleSave }: NavBarPr
         { name: "New...", action: handleFileNew, disabled: match !== null },
         { name: "Open...", action: handleFileOpen, disabled: match !== null },
         {},
-        { name: "Save", action: () => { handleSave() }, disabled: match === null },
+        { name: "Save", action: () => { fileContext.saveSchedule() }, disabled: match === null },
         {
             name: "Save & Close",
             action: async () => {
-                await handleSave();
-                fileContext.setSavedAt(undefined);
-                navigate("/");
+                await fileContext.saveScheduleAndClose();
             }, disabled: match === null
         },
         {},

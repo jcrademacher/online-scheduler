@@ -18,7 +18,7 @@ const schema = a.schema({
     // }),
     Analysis: a.customType({
         enabled: a.boolean().required(),
-        raise: a.enum(["INFO", "WARNING", "ERROR"])
+        raises: a.enum(["INFO", "WARNING", "ERROR"])
     }),
 
     // analyze: a

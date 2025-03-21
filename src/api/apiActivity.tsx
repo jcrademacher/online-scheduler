@@ -45,8 +45,10 @@ export async function getActivitiesMapped(protos: ActivityPrototypeMap): Promise
         const acts = await getActivities(protos[proto]);
         
         for(let i=0; i<acts.length; i++) {
-            retval[proto] = {
-                ...retval[proto],
+            let actId = acts[i].activityPrototypeId;
+
+            retval[actId] = {
+                ...retval[actId],
                 [moment(acts[i].startTime).toISOString()]: acts[i]
             }
         }
@@ -92,6 +94,9 @@ export async function saveActivities(oldActs: LocalIDMap<LocalLegActivity>| unde
     let updatedActs: LocalIDMap<LocalLegActivity> = acts;
     let updatedGacts: TimeMap<LocalGlobalActivity> = gacts;
 
+    // console.log("old acts", oldActs);
+    // console.log("acts", acts);
+
     // first diff old and new, and delete differences in old
     if(oldActs) {
         let oldActsFlat = Object.values(oldActs).map((el) => Object.values(el)).reduce((acc,val) => acc.concat(val), []);
@@ -102,7 +107,7 @@ export async function saveActivities(oldActs: LocalIDMap<LocalLegActivity>| unde
 
         // console.log('old IDs: ', oldIDs);
         // console.log('new IDs: ', newIDs);
-        // console.log('diff: ', diff);
+        console.log('acts diff: ', diff);
 
         for(const act of diff) {
 
@@ -131,7 +136,7 @@ export async function saveActivities(oldActs: LocalIDMap<LocalLegActivity>| unde
 
         // console.log('old IDs: ', oldIDs);
         // console.log('new IDs: ', newIDs);
-        console.log('diff: ', diff);
+        console.log('gacts diff: ', diff);
 
         for(const gact of diff) {
             let id = gact.id;

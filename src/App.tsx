@@ -16,17 +16,14 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 import { LandingView } from './pages/landing.js';
-import { SchedulerRef } from './components/scheduler/index.js';
 import { FileContextProvider } from './components/file/context-provider.js';
 
 function App() {
 
     const [modal, setModal] = useState<string | undefined>(undefined);
 
-    const schedulerRef = useRef<SchedulerRef>(null);
-
     return (
-        <Authenticator hideSignUp>
+        <Authenticator>
             {({ signOut }) => {
 
                 return (
@@ -36,11 +33,6 @@ function App() {
                                 signOut={signOut}
                                 handleFileNew={() => setModal("new")}
                                 handleFileOpen={() => setModal("open")}
-                                handleSave={async () => {
-                                    if (schedulerRef.current) {
-                                        await schedulerRef.current.save();
-                                    }
-                                }}
                             />
                             <FileModal
                                 show={modal === "new"}
@@ -65,9 +57,7 @@ function App() {
                                     <Route path="/" element={<LandingView />} />
                                     <Route path="/schedule">
                                         <Route path="/schedule/*" element={
-                                            <SchedulingView 
-                                                saveRef={schedulerRef}
-                                            />
+                                            <SchedulingView />
                                         } />
                                     </Route>
                                 </Routes>

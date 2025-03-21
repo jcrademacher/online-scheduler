@@ -1,29 +1,61 @@
-import { useContext, createContext, useState, ReactNode } from 'react';
+import { useContext, createContext, useState, ReactNode, useRef, useCallback } from 'react';
+import { SchedulerRef } from '../../components/scheduler/index.js';
+import { createTime } from '../../utils/time.js';
+import { useNavigate } from 'react-router-dom';
+import { ToastType } from '../notifications.js';
+import { emitToast } from '../notifications.js';
+
 
 interface FileStateInterface {
-    saving: boolean,
-    setSaving: (state: boolean) => void,
-    savedAt: moment.Moment | undefined,
-    setSavedAt: (state: moment.Moment | undefined) => void
+    saveSchedule: () => Promise<void>
+    saveScheduleAndClose: () => Promise<void>
+    saving: boolean
+    savedAt: moment.Moment | undefined
+    saveRef: React.Ref<SchedulerRef>
 }
 
 const FileStateContext = createContext<FileStateInterface>({
+    saveSchedule: async () => {},
+    saveScheduleAndClose: async () => {},
     saving: false,
-    setSaving: (state: boolean) => {},
     savedAt: undefined,
-    setSavedAt: (state: moment.Moment | undefined) => {}
+    saveRef: null
 })
 
 export function FileContextProvider({children}: {children: ReactNode}) {
     const [saving, setSaving] = useState(false);
     const [savedAt, setSavedAt] = useState<moment.Moment | undefined>(undefined);
 
+    const navigate = useNavigate();
+
+    const schedulerRef = useRef<SchedulerRef>(null);
+
+    const handleSave = useCallback(async () => {
+        // console.log("updated handleSave");
+        if (schedulerRef.current) {
+            setSaving(true);
+            await schedulerRef.current.save();
+            setSaving(false);
+            setSavedAt(createTime());
+        }
+        else {
+            emitToast("No scheduler ref found", ToastType.Error);
+        }
+    }, [schedulerRef]);
+
+    const handleSaveAndClose = async () => {
+        await handleSave();
+        setSavedAt(undefined);
+        navigate("/");
+    };
+
     return (
         <FileStateContext.Provider value={{
+            saveSchedule: handleSave,
+            saveScheduleAndClose: handleSaveAndClose,
             saving: saving,
-            setSaving: setSaving,
             savedAt: savedAt,
-            setSavedAt: setSavedAt
+            saveRef: schedulerRef
         }}>
             {children}
         </FileStateContext.Provider>

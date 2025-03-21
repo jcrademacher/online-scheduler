@@ -56,7 +56,7 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
     const schedule: Schedule | null = schQuery.data ? schQuery.data : null;
 
     // context
-    const fileContext = useFileContext();
+    // const fileContext = useFileContext();
 
     const activities = actProtoQuery.data ? actProtoQuery.data : {};
 
@@ -68,8 +68,8 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
     // const [deletedActIDs, setDeletedActIDs] = useState<string[]>([]);
     // const [deletedGactIDs, setDeletedGactIDs] = useState<string[]>([]);
 
-    let localSch = state;
-    let setLocalSch = set;
+    const localSch = state;
+    const setLocalSch = set;
 
     const queryClient = useQueryClient();
 
@@ -77,10 +77,17 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
 
     useEffect(() => {
         if (actsQuery.data) {
-            // console.log(actQuery.data);
+            console.log("Setting local sch in effect");
+            // console.log(actsQuery.data);
+            
+            // setLocalSch({
+            //     globalActs: { ...localSch.globalActs, ...actsQuery.data.globalActs },
+            //     acts: { ...localSch.acts, ...actsQuery.data.acts }
+            // });
+
             setLocalSch({
-                globalActs: { ...localSch.globalActs, ...actsQuery.data.globalActs },
-                acts: { ...localSch.acts, ...actsQuery.data.acts }
+                globalActs: actsQuery.data.globalActs,
+                acts: actsQuery.data.acts
             });
         }
     }, [actsQuery.data, syncState]);
@@ -130,31 +137,37 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
         mutationKey: ['saveSchedule', scheduleId],
         mutationFn: async () => saveActivities(actsQuery.data?.acts, actsQuery.data?.globalActs, localSch.acts, localSch.globalActs),
         onSuccess: (data) => {
-            // console.log("Success");
-            fileContext.setSaving(false);
+            console.log("Success");
+            // fileContext.setSaving(false);
             // clear();
             // queryClient.invalidateQueries();
             queryClient.setQueryData(['allActivities', scheduleId], { acts: data.acts, globalActs: data.gacts });
-            setSyncState((s) => !s);
+            // setLocalSch({
+            //     globalActs: data.gacts,
+            //     acts: data.acts
+            // });
 
             emitToast("Changes saved", ToastType.Success);
-            fileContext.setSavedAt(createTime());
         },
         onError: (error) => {
-            fileContext.setSaving(false);
-            setSyncState((s) => !s);
+            // fileContext.setSaving(false);
+            // setSyncState((s) => !s);
             emitToast(`Error saving schedule: ${error.message}`, ToastType.Error);
         },
         onMutate: () => {
-            fileContext.setSaving(true);
+            // fileContext.setSaving(true);
+            // console.log(state);
+            console.log("Saving...");
         }
     });
 
-    useImperativeHandle(ref, () => ({
-        save: async () => {
-            await saveSchMutation.mutateAsync();
-        }
-    }));
+    useImperativeHandle(ref, () => {
+        return {
+            save: async () => {
+                await saveSchMutation.mutateAsync();
+            }
+        };
+    });
 
     const handleMoveActivity = (newId: string, newTime: moment.Moment, oldAct: LocalLegActivity) => {
         let newActs = localSch.acts[newId] ? { ...localSch.acts[newId] } : {};
@@ -170,7 +183,14 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
         let canCreate = checkActivityCreate(newTime, newActProto.duration, thisDayEnd, newActs, localSch.globalActs);
 
         if (canCreate) {
-            let newAct = { ...oldAct };
+            // Create a completely new activity object with all properties copied
+            let newAct: LocalLegActivity = {
+                startTime: newTime.toISOString(),
+                shadow: oldAct.shadow,
+                leg: [...oldAct.leg], // Deep copy the leg array
+                activityPrototypeId: newId,
+                id: oldAct.id // Preserve the original ID if it exists
+            };
 
             let oldActProto = activities[oldAct.activityPrototypeId];
             let gsdiff = oldActProto.groupSize - newActProto.groupSize;
@@ -179,24 +199,24 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
                 newAct.leg = newAct.leg.slice(0, newActProto.groupSize);
             }
             else {
-                newAct.leg = newAct.leg.slice(0, oldActProto.groupSize); // copies
+                newAct.leg = newAct.leg.slice(0, oldActProto.groupSize);
             }
-
-            newAct.activityPrototypeId = newId;
-            newAct.startTime = newTime.toISOString();
 
             addActivity(newAct, newActs);
 
+            let newSch;
+
             if (sameProto) {
                 removeActivity(oldAct, newActs);
-
-                setLocalSch({ ...localSch, acts: { ...localSch.acts, [newId]: newActs } });
+                newSch = { ...localSch, acts: { ...localSch.acts, [newId]: { ...newActs } }};
             }
             else {
                 removeActivity(oldAct, oldActs);
-
-                setLocalSch({ ...localSch, acts: { ...localSch.acts, [oldId]: oldActs, [newId]: newActs } });
+                newSch = { ...localSch, acts: { ...localSch.acts, [oldId]: oldActs, [newId]: {...newActs }} };
             }
+
+            // console.log("newSch", newSch);
+            setLocalSch(newSch);
         }
     }
 
@@ -274,7 +294,7 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
         const gacts = { ...localSch.globalActs };
         // newGacts[newGact.startTime] = newGact;
         updateActivity(newGact, gacts);
-        console.log(newGact);
+        // console.log(newGact);
         setLocalSch({ ...localSch, globalActs: gacts });
     }
 

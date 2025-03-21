@@ -53,16 +53,3 @@ export async function mutateSchedule(data: UpdateSchedule): Promise<void> {
         throw new Error(retval.errors?.map((el) => el.message).join(','));
     }
 }
-
-export async function analyzeSchedule(id: string): Promise<void> {
-    const retval = await client.queries.analyze({ scheduleId: id });
-
-    if(!retval.errors && retval.data) {
-        console.log(retval.data);
-        return;
-    }
-    else {
-        console.log(retval.errors);
-        throw new Error(retval.errors?.map((el) => el.message).join(', '));
-    }
-}

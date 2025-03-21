@@ -7,8 +7,7 @@ import { useState } from 'react';
 import { Scheduler, SchedulerRef } from '../components/scheduler';
 import Settings from '../components/settings';
 import moment from 'moment';
-
-import { analyzeSchedule } from '../api/apiSchedule';
+import { Analysis, analyzeSchedule } from '../analyzer';
 
 export enum View {
     MASTER = "Master",
@@ -27,12 +26,15 @@ type StatusBarProps = {
 
 function StatusBar({ startDates, dayView, setDayView, setShowSettings }: StatusBarProps) {
     let startDate = startDates[0];
+
     const match = useScheduleIDMatch();
     const scheduleId = match?.params.scheduleId as string;
 
     const fileContext = useFileContext();
 
     let { saving, savedAt } = fileContext;
+
+    let [analysis, setAnalysis] = useState<Analysis | null>(null);
 
     let renderSave = () => {
         if (saving) {
@@ -51,7 +53,12 @@ function StatusBar({ startDates, dayView, setDayView, setShowSettings }: StatusB
         else {
             return <span>never</span>;
         }
-    };
+    };      
+
+    let handleAnalyze = async () => {
+        const analysis = await analyzeSchedule(scheduleId);
+        setAnalysis(analysis);
+    }
 
     return (
         <div id='status-bar'>
@@ -74,11 +81,11 @@ function StatusBar({ startDates, dayView, setDayView, setShowSettings }: StatusB
                 <div id='info-bar'>
                     <div id="analysis-bar">
                         <FontAwesomeIcon className='analysis-count' color="green" icon={faCircleInfo} />
-                        <span>0</span>
+                        <span>{analysis ? analysis.info.length : 0}</span>
                         <FontAwesomeIcon className='analysis-count' color="#dbb402" icon={faTriangleExclamation} />
-                        <span>0</span>
+                        <span>{analysis ? analysis.warnings.length : 0}</span>
                         <FontAwesomeIcon className='analysis-count' color="red" icon={faCircleXmark} />
-                        <span>0</span>
+                        <span>{analysis ? analysis.errors.length : 0}</span>
                     </div>
                     <span id='last-saved'>Last saved:&nbsp;{renderSave()}</span>
 
@@ -93,7 +100,7 @@ function StatusBar({ startDates, dayView, setDayView, setShowSettings }: StatusB
                     </Button>
                     <Button
                         variant='light'
-                        onClick={() => { analyzeSchedule(scheduleId) }}
+                        onClick={handleAnalyze}
                     >
                         <FontAwesomeIcon style={{ marginRight: "5px" }} icon={faWrench} />
                         Analyze
@@ -126,11 +133,12 @@ import { useScheduleIDMatch } from '../utils/router';
 import { Spinner } from 'react-bootstrap';
 import { useFileContext } from '../components/file/context-provider';
 
+
 interface ScheduleViewProps {
-    saveRef: React.Ref<SchedulerRef>
+    // saveRef: React.Ref<SchedulerRef>
 }
 
-export default function ScheduleView({ saveRef }: ScheduleViewProps) {
+export default function ScheduleView({  }: ScheduleViewProps) {
     const [view, setView] = useState<View>(View.MASTER);
     const [dayView, setDayView] = useState<number>(1);
     // const [activities, setActivities] = useState<Schema["ActivityPrototype"]["type"][]>([]);
@@ -140,6 +148,8 @@ export default function ScheduleView({ saveRef }: ScheduleViewProps) {
     const scheduleId = match?.params.scheduleId as string;
 
     const query = useScheduleQuery(scheduleId);
+
+    const { saveRef } = useFileContext();
 
 
     // useEffect(() => {

@@ -32,6 +32,7 @@ import colors from '../../styles/colors.module.scss';
 
 import { useScheduleIDMatch } from '../../utils/router';
 import { useScheduleQuery } from '../../queries';
+import { getTextColor } from '../../utils/color';
 
 export function addActivity<T extends Activity>(newAct: T, object: TimeMap<T>) {
     object[newAct.startTime] = { ...newAct };
@@ -487,15 +488,20 @@ export function ScheduledGlobalActivity({ activeAct, handleSave, handleDelete, t
 
     const watchedColor = watch("color");
     const watchedName = watch("name");
+    const textColor = getTextColor(watchedColor);
 
     return (
         <>
             <div
                 className="global-activity"
-                style={{ gridColumn: `2 / span ${span}`, gridRow, backgroundColor: watchedColor}}
+                style={{ 
+                    gridColumn: `2 / span ${span}`, 
+                    gridRow, 
+                    backgroundColor: watchedColor,
+                    color: textColor
+                }}
                 ref={(el) => { refs.setReference(el); drag(el) }}
                 {...getReferenceProps()}
-            // key={}
             >
                 {watchedName}
             </div>
@@ -523,8 +529,7 @@ export function ScheduledGlobalActivity({ activeAct, handleSave, handleDelete, t
                                 color={watchedColor}
                                 triangle="hide"
                             />
-                   
-                            
+        
 
                             <div id="form-footer">
                                 <Button variant="primary" type="submit">
