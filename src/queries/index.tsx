@@ -32,25 +32,25 @@ export function useSchedulesQuery() {
     });
 }
 
-export function useActivitiesQuery(id: string | undefined, protos: ActivityPrototypeMap | undefined) {
-    return useQuery({
-        queryKey: ['activity', id],
-        queryFn: async () => getActivitiesMapped(protos as ActivityPrototypeMap),
-        enabled: !!protos && !!id,
-        staleTime: 60*1000,
-        refetchOnWindowFocus: false
-    })
-}
+// export function useActivitiesQuery(id: string | undefined, protos: ActivityPrototypeMap | undefined) {
+//     return useQuery({
+//         queryKey: ['activity', id],
+//         queryFn: async () => getActivitiesMapped(protos as ActivityPrototypeMap),
+//         enabled: !!protos && !!id,
+//         staleTime: 60*1000,
+//         refetchOnWindowFocus: false
+//     })
+// }
 
-export function useGlobalActivitiesQuery(id: string | undefined, protos: ActivityPrototypeMap | undefined) {
-    return useQuery({
-        queryKey: ['globalActivity', id],
-        queryFn: async () => getGlobalActivitiesMapped(id as string),
-        enabled: !!protos && !!id,
-        staleTime: 60*1000,
-        refetchOnWindowFocus: false
-    })
-}
+// export function useGlobalActivitiesQuery(id: string | undefined, protos: ActivityPrototypeMap | undefined) {
+//     return useQuery({
+//         queryKey: ['globalActivity', id],
+//         queryFn: async () => getGlobalActivitiesMapped(id as string),
+//         enabled: !!protos && !!id,
+//         staleTime: 60*1000,
+//         refetchOnWindowFocus: false
+//     })
+// }
 
 export function useAllActivitiesQuery(id: string | undefined, protos: ActivityPrototypeMap | undefined) {
     return useQuery({

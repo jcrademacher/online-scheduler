@@ -54,3 +54,15 @@ export function getSlotDiff(t1: moment.Moment, t2: moment.Moment) {
     return t1.diff(t2, 'hours', true) * 2;
 }
 
+export function getTotalScheduleSlotCount(schedule: Schedule) {
+    let count = 0;
+    for(let i=0; i<schedule.startDates.length; i++) {
+        count += createTime(schedule.endDates[i]).diff(createTime(schedule.startDates[i]), 'hours', true) * 2;
+    }
+    return count;
+}
+
+export function dayOfCamp(time: moment.Moment, schedule: Schedule) {
+    return time.diff(createTime(schedule.startDates[0]), 'days') + 1;
+}
+

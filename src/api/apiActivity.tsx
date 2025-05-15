@@ -1,6 +1,6 @@
 import type { Schema } from "../../amplify/data/resource.ts";
 import { checkErrors, client } from './index.tsx';
-import { LocalIDMap, TimeMap } from "../components/scheduler/types";
+import { LocalIDMap, ScheduleObject, TimeMap } from "../components/scheduler/types";
 import { ActivityPrototypeMap, ActivityPrototype } from "./apiActivityPrototype.tsx";
 
 import moment from "moment";
@@ -88,7 +88,7 @@ export async function getGlobalActivitiesMapped(scheduleId: string): Promise<Tim
     return retval;
 }
 
-export async function saveActivities(oldActs: LocalIDMap<LocalLegActivity>| undefined, oldGacts: TimeMap<LocalGlobalActivity> | undefined, acts: LocalIDMap<LocalLegActivity>, gacts: TimeMap<LocalGlobalActivity>): Promise<{ acts: LocalIDMap<LocalLegActivity>, gacts: TimeMap<LocalGlobalActivity>}> {
+export async function saveActivities(oldActs: LocalIDMap<LocalLegActivity>| undefined, oldGacts: TimeMap<LocalGlobalActivity> | undefined, acts: LocalIDMap<LocalLegActivity>, gacts: TimeMap<LocalGlobalActivity>): Promise<ScheduleObject> {
     var retval;
 
     let updatedActs: LocalIDMap<LocalLegActivity> = acts;
@@ -107,7 +107,7 @@ export async function saveActivities(oldActs: LocalIDMap<LocalLegActivity>| unde
 
         // console.log('old IDs: ', oldIDs);
         // console.log('new IDs: ', newIDs);
-        console.log('acts diff: ', diff);
+        // console.log('acts diff: ', diff);
 
         for(const act of diff) {
 
@@ -136,7 +136,7 @@ export async function saveActivities(oldActs: LocalIDMap<LocalLegActivity>| unde
 
         // console.log('old IDs: ', oldIDs);
         // console.log('new IDs: ', newIDs);
-        console.log('gacts diff: ', diff);
+        // console.log('gacts diff: ', diff);
 
         for(const gact of diff) {
             let id = gact.id;
@@ -211,6 +211,6 @@ export async function saveActivities(oldActs: LocalIDMap<LocalLegActivity>| unde
 
     return {
         acts: updatedActs,
-        gacts: updatedGacts
+        globalActs: updatedGacts
     };
 }

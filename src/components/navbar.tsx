@@ -45,6 +45,8 @@ function NavDropdown({ title, items }: DropdownProps) {
 
 import { useScheduleIDMatch } from '../utils/router';
 import { useFileContext } from './file/context-provider';
+import { ToastType } from './notifications';
+import { emitToast } from './notifications';
 
 function NavBar({ signOut, handleFileNew, handleFileOpen }: NavBarProps) {
 
@@ -71,7 +73,12 @@ function NavBar({ signOut, handleFileNew, handleFileOpen }: NavBarProps) {
         { name: "New...", action: handleFileNew, disabled: match !== null },
         { name: "Open...", action: handleFileOpen, disabled: match !== null },
         {},
-        { name: "Save", action: () => { fileContext.saveSchedule() }, disabled: match === null },
+        { 
+            name: "Save", 
+            action: async () => { 
+                await fileContext.saveSchedule(); 
+                emitToast("Changes saved", ToastType.Success);
+            }, disabled: match === null },
         {
             name: "Save & Close",
             action: async () => {

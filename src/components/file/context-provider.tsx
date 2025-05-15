@@ -1,13 +1,13 @@
 import { useContext, createContext, useState, ReactNode, useRef, useCallback } from 'react';
-import { SchedulerRef } from '../../components/scheduler/index.js';
 import { createTime } from '../../utils/time.js';
 import { useNavigate } from 'react-router-dom';
 import { ToastType } from '../notifications.js';
 import { emitToast } from '../notifications.js';
+import { ScheduleObject } from '../scheduler/types.js';
 
 
 interface FileStateInterface {
-    saveSchedule: () => Promise<void>
+    saveSchedule: () => Promise<ScheduleObject>
     saveScheduleAndClose: () => Promise<void>
     saving: boolean
     savedAt: moment.Moment | undefined
@@ -15,12 +15,16 @@ interface FileStateInterface {
 }
 
 const FileStateContext = createContext<FileStateInterface>({
-    saveSchedule: async () => {},
+    saveSchedule: async () => { return { acts: {}, globalActs: {}} },
     saveScheduleAndClose: async () => {},
     saving: false,
     savedAt: undefined,
     saveRef: null
 })
+
+export interface SchedulerRef {
+    save: () => Promise<ScheduleObject>;
+}
 
 export function FileContextProvider({children}: {children: ReactNode}) {
     const [saving, setSaving] = useState(false);
@@ -30,18 +34,23 @@ export function FileContextProvider({children}: {children: ReactNode}) {
 
     const schedulerRef = useRef<SchedulerRef>(null);
 
-    const handleSave = useCallback(async () => {
+    const handleSave: () => Promise<ScheduleObject> = async () => {
         // console.log("updated handleSave");
+        var data = { acts: {}, globalActs: {} };
         if (schedulerRef.current) {
             setSaving(true);
-            await schedulerRef.current.save();
+            data = await schedulerRef.current.save();
             setSaving(false);
             setSavedAt(createTime());
+            // return data;
         }
         else {
             emitToast("No scheduler ref found", ToastType.Error);
+            // return { acts: {}, globalActs: {} };
         }
-    }, [schedulerRef]);
+
+        return data; 
+    };
 
     const handleSaveAndClose = async () => {
         await handleSave();

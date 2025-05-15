@@ -16,14 +16,14 @@ import {
     GlobalActivityDragStatus,
     GlobalActivityState,
     TimeMap,
-    Activity,
+    LocalActivity,
     LocalIDMap
 } from "./types";
 
 import { ActivityPrototypeMap } from "../../api/apiActivityPrototype";
 import { LocalLegActivity, LocalGlobalActivity } from '../../api/apiActivity';
 
-import { Button } from 'react-bootstrap';
+import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { range } from 'lodash';
 
 import { useDrag, useDrop } from 'react-dnd';
@@ -34,15 +34,15 @@ import { useScheduleIDMatch } from '../../utils/router';
 import { useScheduleQuery } from '../../queries';
 import { getTextColor } from '../../utils/color';
 
-export function addActivity<T extends Activity>(newAct: T, object: TimeMap<T>) {
+export function addActivity<T extends LocalActivity>(newAct: T, object: TimeMap<T>) {
     object[newAct.startTime] = { ...newAct };
 }
 
-export function removeActivity<T extends Activity>(act: T, object: TimeMap<T>) {
+export function removeActivity<T extends LocalActivity>(act: T, object: TimeMap<T>) {
     delete object[act.startTime];
 }
 
-export function updateActivity<T extends Activity>(newAct: T, object: TimeMap<T>) {
+export function updateActivity<T extends LocalActivity>(newAct: T, object: TimeMap<T>) {
     object[newAct.startTime] = newAct;
 }
 
@@ -210,12 +210,15 @@ export interface ScheduledActivityProps {
     duration: number,
     groupSize: number,
     handleSave: (newAct: LocalLegActivity) => void,
-    handleDelete: (newAct: LocalLegActivity) => void
+    handleDelete: (newAct: LocalLegActivity) => void,
+    errors: string[],
+    warnings: string[],
+    info: string[]
 }
 
 import { CompactPicker } from 'react-color';
 
-export function ScheduledActivity({ activeAct, timeIndex, duration, groupSize, handleDelete, handleSave }: ScheduledActivityProps) {
+export function ScheduledActivity({ activeAct, timeIndex, duration, groupSize, handleDelete, handleSave, errors,warnings, info }: ScheduledActivityProps) {
     const match = useScheduleIDMatch();
     const scheduleId = match?.params.scheduleId as string;
 
@@ -270,7 +273,7 @@ export function ScheduledActivity({ activeAct, timeIndex, duration, groupSize, h
     const {
         register,
         handleSubmit,
-        formState: { errors },
+        formState: { errors: formErrors },
         reset
     } = useForm<ActivityOptions>({ values: !activeAct.leg.some((el) => el === 0) ? {
         leg: activeAct.leg,
@@ -316,20 +319,41 @@ export function ScheduledActivity({ activeAct, timeIndex, duration, groupSize, h
         item: activeAct
     }), [activeAct]);
 
+    const showTooltip = errors.length > 0 || warnings.length > 0 || info.length > 0;
+
     return (
-        <>
-            <div
-                ref={(el) => { refs.setReference(el); drag(el); }}
-                {...getReferenceProps()}
-                className='scheduled'
-                style={{
-                    gridRow: gridRow
-                }}
-            // draggable={!notScheduled}
-            // onDragStart={() => console.log("drag start")}
+        <>  
+            <OverlayTrigger
+                placement={"top"}
+                overlay={
+                    <Tooltip style={{position: "fixed"}}>
+                        <ul className="activity-analysis-tooltip" style={{ paddingLeft: 10  }}>
+                            {errors.map((error, i) => (
+                                <li className="error" key={i}>{error}</li>
+                            ))}
+                            {warnings.map((warning, i) => (
+                                <li className="warning" key={i}>{warning}</li>
+                            ))}
+                            {info.map((info, i) => (
+                                <li key={i}>{info}</li>
+                            ))}
+                        </ul>
+                    </Tooltip>
+                }
+                trigger={["hover", "focus"]}
+                show={showTooltip ? undefined : false}
             >
-                {leg.some((el) => el === 0) ? "" : leg.join(",")}
-            </div>
+                <div
+                    ref={(el) => { refs.setReference(el); drag(el); }}
+                    {...getReferenceProps()}
+                    className={`scheduled ${warnings.length > 0 ? "warning" : ""} ${errors.length > 0 ? "error" : ""}`}
+                    style={{
+                        gridRow: gridRow
+                    }}
+                >
+                    {leg.some((el) => el === 0) ? "" : leg.join(" & ")}
+                </div>
+            </OverlayTrigger>
             {isOpen && (
                 <div
                     ref={refs.setFloating}
@@ -346,7 +370,7 @@ export function ScheduledActivity({ activeAct, timeIndex, duration, groupSize, h
                                         required: true, 
                                         validate: (val) => val > 0 && val <= numLegs && Number.isInteger(val)
                                     })}
-                                    isInvalid={!!(errors?.leg ? errors.leg[i] : false)}
+                                    isInvalid={!!(formErrors?.leg ? formErrors.leg[i] : false)}
                                     type="number"
                                     placeholder="Leg Number"
                                     autoFocus={i === 0}
@@ -527,7 +551,6 @@ export function ScheduledGlobalActivity({ activeAct, handleSave, handleDelete, t
                                 ref={colorRegister.ref}
                                 onChange={(color: { hex: string },_: any) => setValue("color",color.hex)}
                                 color={watchedColor}
-                                triangle="hide"
                             />
         
 

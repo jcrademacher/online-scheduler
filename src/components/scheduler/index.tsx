@@ -1,6 +1,6 @@
 import { View } from '../../pages/scheduling-page'
 import '../../styles/scheduler.scss'
-import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import moment from 'moment';
 import { checkActivityCreate, checkGlobalActivityCreate, ScheduledGlobalActivity } from './activities';
 
@@ -24,10 +24,12 @@ import {
 import { useHistoryState } from '@uidotdev/usehooks';
 import { Schedule } from '../../api/apiSchedule';
 import { LocalLegActivity, LocalGlobalActivity, saveActivities } from '../../api/apiActivity';
-import { useActivityPrototypesQuery, useActivitiesQuery, useScheduleQuery, useGlobalActivitiesQuery, useAllActivitiesQuery } from '../../queries';
+import { useActivityPrototypesQuery, useScheduleQuery, useAllActivitiesQuery } from '../../queries';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useScheduleIDMatch } from '../../utils/router';
 import { createTime } from '../../utils/time';
+import { SchedulerRef } from '../file/context-provider.js';
+
 
 import { emitToast, ToastType } from '../notifications';
 
@@ -35,18 +37,15 @@ import { emitToast, ToastType } from '../notifications';
 
 interface SchedulerProps {
     view: View,
-    dayView: number
-}
-
-export interface SchedulerRef {
-    save: () => Promise<void>;
+    dayView: number,
+    analysis: AnalysisResult | null,
 }
 
 export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) => {
     const match = useScheduleIDMatch();
     const scheduleId = match?.params.scheduleId as string;
 
-    let { dayView } = props;
+    let { dayView, analysis } = props;
 
     // queries
     const actProtoQuery = useActivityPrototypesQuery(scheduleId);
@@ -54,6 +53,8 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
     const actsQuery = useAllActivitiesQuery(scheduleId, actProtoQuery.data);
 
     const schedule: Schedule | null = schQuery.data ? schQuery.data : null;
+
+    // const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
 
     // context
     // const fileContext = useFileContext();
@@ -73,24 +74,24 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
 
     const queryClient = useQueryClient();
 
-    const [syncState, setSyncState] = useState(false);
-
     useEffect(() => {
         if (actsQuery.data) {
-            console.log("Setting local sch in effect");
-            // console.log(actsQuery.data);
-            
-            // setLocalSch({
-            //     globalActs: { ...localSch.globalActs, ...actsQuery.data.globalActs },
-            //     acts: { ...localSch.acts, ...actsQuery.data.acts }
-            // });
-
             setLocalSch({
                 globalActs: actsQuery.data.globalActs,
                 acts: actsQuery.data.acts
             });
         }
-    }, [actsQuery.data, syncState]);
+    }, [actsQuery.data]);
+
+    // useEffect(() => {
+    //     if (actsQuery.data && actProtoQuery.data) {
+    //         console.log("Analyzed");
+    //         analyzeSchedule(localSch.acts, actProtoQuery.data).then((data) => {
+                
+    //             setAnalysis(data);
+    //         });
+    //     }
+    // }, [localSch]);
 
     const handleUndo = (evt: KeyboardEvent) => {
         evt.stopImmediatePropagation();
@@ -117,46 +118,23 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
         }
     }, [undo, redo]);
 
-
-    // const [localSchActs, setLocalSchActs] = useState<LocalActivityMap>({});
-
     const [gactState, setGactState] = useState<GlobalActivityState>({
         status: GlobalActivityDragStatus.NONE
     });
-    // const [thisDayStart, setThisDayStart] = useState<moment.Moment>(initDate);
 
     let thisDayStart = createTime(schedule?.startDates[dayView - 1]);
     let thisDayEnd = createTime(schedule?.endDates[dayView - 1]);
-    // console.log(thisDayStart);
-
-    // const testGactStart = times[4].clone();
-    // testGactStart.add(1,"day");
-    // console.log(testGactStart.toString());
 
     const saveSchMutation = useMutation({
         mutationKey: ['saveSchedule', scheduleId],
         mutationFn: async () => saveActivities(actsQuery.data?.acts, actsQuery.data?.globalActs, localSch.acts, localSch.globalActs),
         onSuccess: (data) => {
-            console.log("Success");
-            // fileContext.setSaving(false);
-            // clear();
-            // queryClient.invalidateQueries();
-            queryClient.setQueryData(['allActivities', scheduleId], { acts: data.acts, globalActs: data.gacts });
-            // setLocalSch({
-            //     globalActs: data.gacts,
-            //     acts: data.acts
-            // });
-
-            emitToast("Changes saved", ToastType.Success);
+            console.log("Success");   
         },
         onError: (error) => {
-            // fileContext.setSaving(false);
-            // setSyncState((s) => !s);
             emitToast(`Error saving schedule: ${error.message}`, ToastType.Error);
         },
         onMutate: () => {
-            // fileContext.setSaving(true);
-            // console.log(state);
             console.log("Saving...");
         }
     });
@@ -164,7 +142,9 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
     useImperativeHandle(ref, () => {
         return {
             save: async () => {
-                await saveSchMutation.mutateAsync();
+                const data = await saveSchMutation.mutateAsync();
+                queryClient.setQueryData(['allActivities', scheduleId], data);
+                return data;
             }
         };
     });
@@ -372,16 +352,48 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
         let retval = [];
 
         let keylist = Object.keys(activities);
+        
 
         for (let i = 0; i < keylist.length; ++i) {
             let el = activities[keylist[i]];
 
+            const errors = analysis?.protoLocations[el.id]?.errorMessages || [];
+            const warnings = analysis?.protoLocations[el.id]?.warningMessages || [];
+            const info = analysis?.protoLocations[el.id]?.infoMessages || [];
+
+            // console.log(el.name, errors.length);
+
             let gridColumn = `${i + 1 + 1} / span 1`;
 
             retval.push(
-                <div className={`header ${el.type}`} key={el.id} style={{ gridRow: '1 / span 1', gridColumn: gridColumn }}>
-                    {el.name}
-                </div>
+                <OverlayTrigger
+                placement="bottom"
+                overlay={
+                    <Tooltip style={{position: "fixed"}}>
+                        <div className="activity-analysis-tooltip">
+                            {errors.map((error, i) => (
+                                <div className="error" key={i}>{error}</div>
+                            ))}
+                            {warnings.map((warning, i) => (
+                                <div className="warning" key={i}>{warning}</div>
+                            ))}
+                            {info.map((info, i) => (
+                                <div key={i}>{info}</div>
+                            ))}
+                        </div>
+                    </Tooltip>
+                }
+                    trigger={["hover", "focus"]}
+                    show={errors.length > 0 || warnings.length > 0 || info.length > 0 ? undefined : false}
+                >
+                    <div 
+                        className={`header ${el.type} ${errors.length > 0 ? "error" : ""} ${warnings.length > 0 ? "warning" : ""}`}
+                        key={el.id} 
+                        style={{ gridRow: '1 / span 1', gridColumn: gridColumn }}
+                    >
+                        {el.name}
+                    </div>
+                </OverlayTrigger>
             );
         }
 
@@ -431,6 +443,9 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
                         handleDelete={handleDeleteActivity}
                         handleSave={handleSaveActivity}
                         key={timeIndex}
+                        errors={analysis?.locations[el.id]?.[timeKey]?.errorMessages || []}
+                        warnings={analysis?.locations[el.id]?.[timeKey]?.warningMessages || []}
+                        info={analysis?.locations[el.id]?.[timeKey]?.infoMessages || []}
                     />
                 );
                 // i = i + el.duration * 2;
@@ -468,8 +483,8 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
     }
     else if (actProtoQuery.isSuccess) {
         const containerStyle = {
-            gridTemplateColumns: `repeat(${Object.keys(activities).length + 1}, minmax(50px,1fr))`,
-            gridTemplateRows: `40px repeat(${thisDayEnd.diff(thisDayStart, 'hours', true) * 2}, minmax(10px,1fr))`
+            gridTemplateColumns: `60px repeat(${Object.keys(activities).length}, 1fr)`,
+            gridTemplateRows: `40px repeat(${thisDayEnd.diff(thisDayStart, 'hours', true) * 2}, 1fr)`
         };
 
         return (
@@ -495,9 +510,10 @@ interface LoadingActivitiesViewProps {
     cols: number
 }
 
-import { Spinner } from 'react-bootstrap';
+import { OverlayTrigger, Spinner, Tooltip } from 'react-bootstrap';
 import { timeFormatLocal } from '../../utils/time';
 import { useFileContext } from '../file/context-provider';
+import { AnalysisResult, analyzeSchedule } from '../../analyzer/index.js';
 
 function LoadingActivitiesView({ rows, cols }: LoadingActivitiesViewProps) {
     // let retval: JSX.Element[] = [];

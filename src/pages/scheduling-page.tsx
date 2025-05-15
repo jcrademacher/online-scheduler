@@ -1,13 +1,14 @@
 import '../styles/home.scss';
 import 'react-toastify/dist/ReactToastify.css';
 import Button from 'react-bootstrap/Button';
-import { faCircleInfo, faCircleXmark, faGear, faTriangleExclamation, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faCircleInfo, faCircleXmark, faGear, faTriangleExclamation, faWandMagicSparkles, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useState } from 'react';
-import { Scheduler, SchedulerRef } from '../components/scheduler';
+import { Scheduler } from '../components/scheduler';
 import Settings from '../components/settings';
 import moment from 'moment';
-import { Analysis, analyzeSchedule } from '../analyzer';
+import { AnalysisResult, analyzeSchedule } from '../analyzer';
+import { AnalysisPane } from './analysis-pane';
 
 export enum View {
     MASTER = "Master",
@@ -21,20 +22,22 @@ type StatusBarProps = {
     setView: (view: View) => void,
     dayView: number,
     setDayView: (day: number) => void,
-    setShowSettings: (show: boolean) => void
+    setShowSettings: (show: boolean) => void,
+    showAnalysisPane: boolean,
+    setShowAnalysisPane: (show: boolean) => void
 }
 
-function StatusBar({ startDates, dayView, setDayView, setShowSettings }: StatusBarProps) {
+function StatusBar({ startDates, dayView, setDayView, setShowSettings, showAnalysisPane, setShowAnalysisPane }: StatusBarProps) {
     let startDate = startDates[0];
 
-    const match = useScheduleIDMatch();
-    const scheduleId = match?.params.scheduleId as string;
+    // const match = useScheduleIDMatch();
+    // const scheduleId = match?.params.scheduleId as string;
+
+    // const actProtoQuery = useActivityPrototypesQuery(scheduleId);
+    // const actsQuery = useAllActivitiesQuery(scheduleId, actProtoQuery.data);
 
     const fileContext = useFileContext();
-
     let { saving, savedAt } = fileContext;
-
-    let [analysis, setAnalysis] = useState<Analysis | null>(null);
 
     let renderSave = () => {
         if (saving) {
@@ -55,10 +58,7 @@ function StatusBar({ startDates, dayView, setDayView, setShowSettings }: StatusB
         }
     };      
 
-    let handleAnalyze = async () => {
-        const analysis = await analyzeSchedule(scheduleId);
-        setAnalysis(analysis);
-    }
+
 
     return (
         <div id='status-bar'>
@@ -79,32 +79,33 @@ function StatusBar({ startDates, dayView, setDayView, setShowSettings }: StatusB
                     })}
                 </div>
                 <div id='info-bar'>
-                    <div id="analysis-bar">
-                        <FontAwesomeIcon className='analysis-count' color="green" icon={faCircleInfo} />
-                        <span>{analysis ? analysis.info.length : 0}</span>
-                        <FontAwesomeIcon className='analysis-count' color="#dbb402" icon={faTriangleExclamation} />
-                        <span>{analysis ? analysis.warnings.length : 0}</span>
-                        <FontAwesomeIcon className='analysis-count' color="red" icon={faCircleXmark} />
-                        <span>{analysis ? analysis.errors.length : 0}</span>
-                    </div>
                     <span id='last-saved'>Last saved:&nbsp;{renderSave()}</span>
 
                 </div>
                 <div id='action-btns'>
                     <Button
-                        variant='light'
-                        onClick={() => setShowSettings(true)}
+                        variant={showAnalysisPane ? 'primary' : 'light'}
+                        onClick={() => setShowAnalysisPane(!showAnalysisPane)}
                     >
-                        <FontAwesomeIcon style={{ marginRight: "5px" }} icon={faGear} />
-                        Settings
+                        <FontAwesomeIcon style={{ marginRight: "5px" }} icon={faWandMagicSparkles} />
+                        Analysis
                     </Button>
                     <Button
                         variant='light'
-                        onClick={handleAnalyze}
+                        onClick={() => setShowSettings(true)}
                     >
+                        <FontAwesomeIcon icon={faGear} style={{ marginRight: "5px" }}/>
+                        Settings
+                    </Button>
+                    
+                    {/* <Button variant="light" onClick={handleClearAnalysis}>
+                        <FontAwesomeIcon style={{ marginRight: "5px" }} icon={faXmark} />
+                        Clear
+                    </Button>
+                    <SpinnerButton loading={analysisLoading} variant="light" onClick={handleAnalyze}>
                         <FontAwesomeIcon style={{ marginRight: "5px" }} icon={faWrench} />
                         Analyze
-                    </Button>
+                    </SpinnerButton> */}
 
                 </div>
 
@@ -128,42 +129,64 @@ function StatusBar({ startDates, dayView, setDayView, setShowSettings }: StatusB
     )
 }
 
-import { useScheduleQuery } from '../queries';
+import { useActivityPrototypesQuery, useScheduleQuery } from '../queries';
 import { useScheduleIDMatch } from '../utils/router';
 import { Spinner } from 'react-bootstrap';
 import { useFileContext } from '../components/file/context-provider';
+import { SpinnerButton } from '../utils/button';
+import { emitToast } from '../components/notifications';
+import { ToastType } from '../components/notifications';
+import { Schedule } from '../api/apiSchedule';
 
 
 interface ScheduleViewProps {
     // saveRef: React.Ref<SchedulerRef>
 }
 
+
+
 export default function ScheduleView({  }: ScheduleViewProps) {
     const [view, setView] = useState<View>(View.MASTER);
     const [dayView, setDayView] = useState<number>(1);
-    // const [activities, setActivities] = useState<Schema["ActivityPrototype"]["type"][]>([]);
     const [showSettings, setShowSettings] = useState(false);
+    const [showAnalysisPane, setShowAnalysisPane] = useState(true);
 
     const match = useScheduleIDMatch();
     const scheduleId = match?.params.scheduleId as string;
 
-    const query = useScheduleQuery(scheduleId);
+    const schQuery = useScheduleQuery(scheduleId);
+    const schedule: Schedule | null = schQuery.data ?? null;
+    
+    const actProtoQuery = useActivityPrototypesQuery(scheduleId);
 
-    const { saveRef } = useFileContext();
+    const fileContext = useFileContext();
 
+    let [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
+    let [analysisLoading, setAnalysisLoading] = useState(false);
 
-    // useEffect(() => {
-    //     console.log(query.status);
-    //     if(query.status === "success") {
-    //         emitToast("Opened schedule", ToastType.Success);
-    //     }
-    // }, [query.status]);
+    let handleAnalyze: () => Promise<void> = async () => {
+        setAnalysisLoading(true);
+        await new Promise(r => setTimeout(r, 1)); // idk why this is needed
+        const data = await fileContext.saveSchedule();
 
-    if (query.isLoading) return (<>Loading...</>);
+        if (actProtoQuery.data && schedule) {
+            const analysis = await analyzeSchedule(schedule, data.acts, data.globalActs, actProtoQuery.data);
+            setAnalysis(analysis);
 
-    else if (query.isError) return (<>Error loading schedule</>);
+            emitToast("Analysis complete", ToastType.Success);
+        }
+        else {
+            emitToast("Analysis failed because of missing data", ToastType.Error);
+        }
 
-    else if (query.isSuccess) {
+        setAnalysisLoading(false);
+    };
+
+    if (schQuery.isLoading) return (<>Loading...</>);
+
+    else if (schQuery.isError) return (<>Error loading schedule</>);
+
+    else if (schQuery.isSuccess) {
 
         return (
             <div id="home-page">
@@ -195,13 +218,27 @@ export default function ScheduleView({  }: ScheduleViewProps) {
                         dayView={dayView}
                         setDayView={setDayView}
                         setShowSettings={setShowSettings}
-                        startDates={query.data.startDates.map((el) => moment(el))}
+
+                        startDates={schQuery.data.startDates.map((el) => moment(el))}
+                        showAnalysisPane={showAnalysisPane}
+                        setShowAnalysisPane={setShowAnalysisPane}
                     />
-                    <Scheduler
-                        view={view}
-                        dayView={dayView}
-                        ref={saveRef}
-                    />
+                    <div className="scheduler-container"> 
+                        <Scheduler
+                            view={view}
+                            dayView={dayView}
+                            ref={fileContext.saveRef}
+                            analysis={analysis}
+                        />
+                        <AnalysisPane 
+                            paneOpen={showAnalysisPane}
+                            analysis={analysis} 
+                            onClose={() => setShowAnalysisPane(false)} 
+                            onRunAnalysis={() => { handleAnalyze() }}
+                            analysisLoading={analysisLoading}
+                            onClearAnalysis={() => { setAnalysis(null) }}
+                        />
+                    </div>
                 </div>
             </div>)
     }

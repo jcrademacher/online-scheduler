@@ -4,8 +4,10 @@ $info: #003f2e;
 $highlight: #ffe7c4;
 $program: #e1f7df;
 $element: $highlight;
-$time: rgb(226, 226, 226);
+$time: #fcfcfc;
 $global: #194d33;
+$error: red;
+$warning: orange;
 // $light: white;
 
 :export {
@@ -17,4 +19,6 @@ $global: #194d33;
     program: $program;
     time: $time;
     global: $global;
+    error: $error;
+    warning: $warning;
 }

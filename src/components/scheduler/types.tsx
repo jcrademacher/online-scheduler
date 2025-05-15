@@ -13,6 +13,14 @@ import { LocalLegActivity, LocalGlobalActivity } from "../../api/apiActivity";
 //     [id: string]: LocalActivity[]
 // }
 
+export function isLocalLegActivity(act: LocalLegActivity | LocalGlobalActivity): act is LocalLegActivity {
+    return 'activityPrototypeId' in act;
+}
+
+export function isLocalGlobalActivity(act: LocalLegActivity | LocalGlobalActivity): act is LocalGlobalActivity {
+    return 'scheduleId' in act;
+}
+
 export type TimeMap<T> = {
     [time: string]: T
 }
@@ -20,6 +28,7 @@ export type TimeMap<T> = {
 // export type LocalActivityMap = {
 //     [id: string]: TimeMap<LocalActivity>
 // }
+
 
 export type LocalIDMap<T> = {
     [id: string]: TimeMap<T>;
@@ -52,4 +61,5 @@ export type GlobalActivityState = {
     currentCell?: [id: string, time: moment.Moment]
 }
 
-export type Activity = LocalLegActivity | LocalGlobalActivity;
+export type LocalActivity = LocalLegActivity | LocalGlobalActivity;
+export type LegSchedule = LocalActivity[];

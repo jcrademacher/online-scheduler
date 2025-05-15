@@ -9,10 +9,31 @@ export async function exportScheduleAsXLSX(protos: ActivityPrototypeMap, activit
     // Create a new workbook
     const workbook = new ExcelJS.Workbook();
 
+    const timeColor = colors.time.replace('#', '');
+    const programColor = colors.program.replace('#', '');
+    const elementColor = colors.element.replace('#', '');
     let numDays = schedule.startDates.length;
 
     // Sort activity prototypes alphabetically
     const sortFn = (a: ActivityPrototype, b: ActivityPrototype) => a.name.localeCompare(b.name);
+
+    const timeFill: ExcelJS.Fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: `FF${timeColor}` } // Light gray
+    };
+
+    const programFill: ExcelJS.Fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: `FF${programColor}` } // Light gray
+    };
+
+    const elementFill: ExcelJS.Fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: `FF${elementColor}` } // Light gray
+    };
 
 
     const sortedElms = Object.values(protos).filter((p) => p.type == 'element').sort(sortFn);
@@ -29,7 +50,9 @@ export async function exportScheduleAsXLSX(protos: ActivityPrototypeMap, activit
 
         // Set up columns
         worksheet.columns = [
-            { header: 'Time', width: 15 }, // Time column
+            { header: 'Time', width: 15,
+                fill: timeFill
+             }, // Time column
             ...sortedPrototypes.map(prototype => ({
                 header: prototype.name,
                 width: 20
@@ -41,18 +64,10 @@ export async function exportScheduleAsXLSX(protos: ActivityPrototypeMap, activit
         // Style headers
         worksheet.getRow(1).eachCell((cell, colNumber) => {
             if (colNumber === 1) {
-                cell.fill = {
-                    type: 'pattern',
-                    pattern: 'solid',
-                    fgColor: { argb: colors.time } // Light gray
-                };
+                cell.fill = timeFill;
             } else {
                 const prototype = sortedPrototypes[colNumber - 2];
-                cell.fill = {
-                    type: 'pattern',
-                    pattern: 'solid',
-                    fgColor: { argb: prototype.type === 'element' ? colors.program : colors.element } // Light orange or light green
-                };
+                cell.fill = prototype.type === 'element' ? elementFill : programFill;
             }
             cell.alignment = { horizontal: 'center' };
         });
@@ -66,11 +81,7 @@ export async function exportScheduleAsXLSX(protos: ActivityPrototypeMap, activit
             const timeCell = worksheet.getCell(row, 1);
             timeCell.value = timeFormatLocal(time);
             timeCell.alignment = { horizontal: 'center' };
-            timeCell.fill = {
-                type: 'pattern',
-                pattern: 'solid',
-                fgColor: { argb: colors.time } // Light gray
-            };
+            timeCell.fill = timeFill;
 
             if (timeKey in activities.globalActs) {
                 let globalActivity = activities.globalActs[timeKey];
@@ -86,7 +97,7 @@ export async function exportScheduleAsXLSX(protos: ActivityPrototypeMap, activit
                 cell.fill = {
                     type: 'pattern',
                     pattern: 'solid',
-                    fgColor: { argb: 'FF0000FF' } // Blue
+                    fgColor: { argb: 'FFD3D3D3' } // Blue
                 };
                 cell.font = { color: { argb: 'FFFFFFFF' } }; // White text
             } 
@@ -116,7 +127,7 @@ export async function exportScheduleAsXLSX(protos: ActivityPrototypeMap, activit
 
                 worksheet.mergeCells(row, col, row + slotdur - 1, col);
                 const cell = worksheet.getCell(row, col);
-                cell.value = `${act.leg} ${timeFormatLocal(startTime)}`;
+                cell.value = act.leg.join(" & ");
                 cell.alignment = { horizontal: 'center', vertical: 'middle' };
                 cell.fill = {
                     type: 'pattern',

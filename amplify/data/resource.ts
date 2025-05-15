@@ -1,4 +1,5 @@
 import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
+import { RAISES_OPTIONS } from "./defines";
 // import { analyze } from "../functions/analyze/resource";
 
 /*== STEP 1 ===============================================================
@@ -18,7 +19,16 @@ const schema = a.schema({
     // }),
     Analysis: a.customType({
         enabled: a.boolean().required(),
-        raises: a.enum(["INFO", "WARNING", "ERROR"])
+        raises: a.enum(RAISES_OPTIONS)
+    }),
+
+    Analyses: a.customType({
+        repetition: a.ref("Analysis"),
+        travelTime: a.ref("Analysis"),
+        overlap: a.ref("Analysis"),
+        requirement: a.ref("Analysis"),
+        preferredDays: a.ref("Analysis"),
+        density: a.ref("Analysis")
     }),
 
     // analyze: a
@@ -36,14 +46,7 @@ const schema = a.schema({
             activityPrototypes: a.hasMany('ActivityPrototype', 'scheduleId'),
             globalActivities: a.hasMany('GlobalActivity', 'scheduleId'),
             numLegs: a.integer().required().default(12),
-            analyses: a.customType({
-                repetition: a.ref("Analysis"),
-                travelTime: a.ref("Analysis"),
-                overlap: a.ref("Analysis"),
-                requirement: a.ref("Analysis"),
-                preferredDays: a.ref("Analysis"),
-                density: a.ref("Analysis")
-            })
+            analyses: a.ref("Analyses")
         })
         .authorization((allow) => [
             allow.authenticated().to(['create', 'read']),
@@ -78,12 +81,16 @@ const schema = a.schema({
             scheduleId: a.id().required(),
             schedule: a.belongsTo('Schedule', 'scheduleId'),
             name: a.string().required(),
-            duration: a.float().required(),
+            duration: a.float().required(), // in hours
             type: a.string().required(),
             preferredDays: a.integer().required().array(),
             requiredDays: a.integer().required().array(),
             groupSize: a.integer().required(),
-            zone: a.string().required(),
+            zone: a.customType({
+                name: a.string().required(),
+                xtime: a.integer().required(), // time in minutes as a proxy for distance, can be negative
+                ytime: a.integer().required() // time in minutes as a proxy for distance, can be negative
+            }),
             isRequired: a.boolean().required()
         })
         .authorization((allow) => [allow.authenticated()])
