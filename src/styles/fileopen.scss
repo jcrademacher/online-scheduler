@@ -1,4 +1,4 @@
-@import 'colors.scss';
+@use 'colors.module.scss';
 
 #open {
     padding: 10px;
@@ -42,7 +42,7 @@
         }
 
         &.selected {
-            background-color: $highlight;
+            background-color: colors.$highlight;
         }
 
         :first-child {

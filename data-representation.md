@@ -4,7 +4,6 @@ Schedules Table:
 
 - name (string): the name of the schedule
 - active (bool): is it the current working schedule in the front end
-- year (integer): the year the schedule was designed for
 - id: unique identifier of the schedule
 - activities (one to many): the activities included within the schedule
 
@@ -25,3 +24,19 @@ ActivityPrototypes Table:
 - type (string): the type of activity 
 - preferred_days (enum of integers): the days that this activity is preferred to be scheduled on
 - required_days (enum of integers): the days that this activity MUST be scheduled on
+
+
+ANALYSIS STRUCTURING
+Analysis types:
+- Activity done twice (activity repetition)
+    - error
+- Travel time
+    - warning
+- Leg double-scheduled (activity overlap)
+    - error
+- Activity not scheduled (activity requirement)
+    - error
+- Activity preferred days
+    - warning
+- Schedule density
+    - info

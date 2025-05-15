@@ -8,4 +8,5 @@ export function checkErrors(errors: any[] | undefined) {
         console.log(errors);
         throw new Error(errors?.map((el) => el.message).join(','));
     }
+
 }

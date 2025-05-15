@@ -1,21 +1,19 @@
 import '../styles/navbar.scss';
 import { UseAuthenticator } from '@aws-amplify/ui-react';
 import { Dropdown } from 'react-bootstrap';
+import { useAllActivitiesQuery, useScheduleQuery, useActivityPrototypesQuery } from '../queries';
+import { exportScheduleAsXLSX } from './file/exporter';
 
 interface NavBarProps {
     signOut: UseAuthenticator["signOut"] | undefined;
     handleFileNew: () => void;
     handleFileOpen: () => void;
-    saveSchedule: {
-        saving: boolean,
-        setSaving: (state: boolean) => void
-    }
 }
 
 type DropdownOptions = {
-    name: string,
-    action: () => void,
-    disabled: boolean
+    name?: string,
+    action?: () => void,
+    disabled?: boolean
 }
 
 interface DropdownProps {
@@ -31,50 +29,69 @@ function NavDropdown({ title, items }: DropdownProps) {
             </Dropdown.Toggle>
 
             <Dropdown.Menu>
-                {items.map(({ name, disabled, action }) =>
-                    <Dropdown.Item disabled={disabled} onClick={action} key={name}>{name}</Dropdown.Item>
+                {items.map(({ name, disabled, action },i) => {
+                    if (!name && !action && !disabled) {
+                        return <Dropdown.Divider key={i}/>
+                    }
+                    else {
+                        return <Dropdown.Item disabled={disabled} onClick={action} key={name}>{name}</Dropdown.Item>
+                    }
+                }
                 )}
             </Dropdown.Menu>
         </Dropdown>
     );
 }
 
-import { useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import { useMutationState } from '@tanstack/react-query';
 import { useScheduleIDMatch } from '../utils/router';
+import { useFileContext } from './file/context-provider';
+import { ToastType } from './notifications';
+import { emitToast } from './notifications';
 
-function NavBar({ signOut, handleFileNew, handleFileOpen, saveSchedule }: NavBarProps) {
-    const [willClose, setWillClose] = useState(false);
+function NavBar({ signOut, handleFileNew, handleFileOpen }: NavBarProps) {
 
     const match = useScheduleIDMatch();
-    const navigate = useNavigate();
+    
 
-    const fileItems = [
+    const scheduleId = match?.params.scheduleId;
+
+    const actProtoQuery = useActivityPrototypesQuery(scheduleId);
+    const schQuery = useScheduleQuery(scheduleId);
+    const actsQuery = useAllActivitiesQuery(scheduleId, actProtoQuery.data);
+
+    const fileContext = useFileContext();
+
+    const exportAction = async () => {
+        await fileContext.saveSchedule();
+    
+        if (actsQuery.data && schQuery.data && actProtoQuery.data) {
+            exportScheduleAsXLSX(actProtoQuery.data, actsQuery.data, schQuery.data);
+        }
+    }
+
+    const fileItems: DropdownOptions[] = [
         { name: "New...", action: handleFileNew, disabled: match !== null },
         { name: "Open...", action: handleFileOpen, disabled: match !== null },
-        { name: "Save", action: () => { saveSchedule.setSaving(true) }, disabled: match === null },
+        {},
+        { 
+            name: "Save", 
+            action: async () => { 
+                await fileContext.saveSchedule(); 
+                emitToast("Changes saved", ToastType.Success);
+            }, disabled: match === null },
         {
             name: "Save & Close",
-            action: () => {
-                saveSchedule.setSaving(true);
-                setWillClose(true);
+            action: async () => {
+                await fileContext.saveScheduleAndClose();
             }, disabled: match === null
+        },
+        {},
+        {   
+            name: "Export...", 
+            action: exportAction, 
+            disabled: match === null 
         }
     ];
-
-    const data = useMutationState({
-        // this mutation key needs to match the mutation key of the given mutation (see above)
-        filters: { mutationKey: ['saveSchedule', match?.params.scheduleId as string] },
-        select: (mutation) => mutation.state.status,
-    });
-
-    useEffect(() => {
-        if (willClose && data[data.length-1] === 'success') {
-            setWillClose(false);
-            navigate('/');
-        }
-    }, [data]);
     
 
     return (

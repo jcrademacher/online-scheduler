@@ -38,6 +38,10 @@ export async function createSchedule(data: CreateSchedule): Promise<string> {
 }
 
 export async function mutateSchedule(data: UpdateSchedule): Promise<void> {
+    if(data.startDates?.length !== data.endDates?.length) {
+        throw new Error("Start and end dates arrays must be the same length");
+    }
+
     const retval = await client.models.Schedule.update(data);
     
     if(!retval.errors && retval.data) {

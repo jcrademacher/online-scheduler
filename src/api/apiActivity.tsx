@@ -1,6 +1,6 @@
 import type { Schema } from "../../amplify/data/resource.ts";
 import { checkErrors, client } from './index.tsx';
-import { LocalIDMap, TimeMap } from "../components/scheduler/types";
+import { LocalIDMap, ScheduleObject, TimeMap } from "../components/scheduler/types";
 import { ActivityPrototypeMap, ActivityPrototype } from "./apiActivityPrototype.tsx";
 
 import moment from "moment";
@@ -10,6 +10,11 @@ export type LocalLegActivity = Schema["LegActivity"]['createType'];
 
 export type GlobalActivity = Schema["GlobalActivity"]["type"];
 export type LocalGlobalActivity = Schema["GlobalActivity"]['createType'];
+
+export type AllActivities = {
+    acts: LocalIDMap<LocalLegActivity>
+    globalActs: TimeMap<LocalGlobalActivity>
+}
 
 export async function getActivities(proto: ActivityPrototype): Promise<LocalLegActivity[]> {
     const retval = await proto.activities();
@@ -23,6 +28,16 @@ export async function getActivities(proto: ActivityPrototype): Promise<LocalLegA
     }
 }
 
+export async function getAllActivitiesMapped(scheduleId: string, protos: ActivityPrototypeMap): Promise<AllActivities> {
+    let acts = await getActivitiesMapped(protos);
+    let gacts = await getGlobalActivitiesMapped(scheduleId);
+
+    return {
+        acts: acts,
+        globalActs: gacts
+    };
+}
+
 export async function getActivitiesMapped(protos: ActivityPrototypeMap): Promise<LocalIDMap<LocalLegActivity>> {
     const retval: LocalIDMap<LocalLegActivity> = {};
 
@@ -30,8 +45,10 @@ export async function getActivitiesMapped(protos: ActivityPrototypeMap): Promise
         const acts = await getActivities(protos[proto]);
         
         for(let i=0; i<acts.length; i++) {
-            retval[proto] = {
-                ...retval[proto],
+            let actId = acts[i].activityPrototypeId;
+
+            retval[actId] = {
+                ...retval[actId],
                 [moment(acts[i].startTime).toISOString()]: acts[i]
             }
         }
@@ -71,11 +88,14 @@ export async function getGlobalActivitiesMapped(scheduleId: string): Promise<Tim
     return retval;
 }
 
-export async function saveActivities(oldActs: LocalIDMap<LocalLegActivity>| undefined, oldGacts: TimeMap<LocalGlobalActivity> | undefined, acts: LocalIDMap<LocalLegActivity>, gacts: TimeMap<LocalGlobalActivity>): Promise<{ acts: LocalIDMap<LocalLegActivity>, gacts: TimeMap<LocalGlobalActivity>}> {
+export async function saveActivities(oldActs: LocalIDMap<LocalLegActivity>| undefined, oldGacts: TimeMap<LocalGlobalActivity> | undefined, acts: LocalIDMap<LocalLegActivity>, gacts: TimeMap<LocalGlobalActivity>): Promise<ScheduleObject> {
     var retval;
 
     let updatedActs: LocalIDMap<LocalLegActivity> = acts;
     let updatedGacts: TimeMap<LocalGlobalActivity> = gacts;
+
+    // console.log("old acts", oldActs);
+    // console.log("acts", acts);
 
     // first diff old and new, and delete differences in old
     if(oldActs) {
@@ -87,7 +107,7 @@ export async function saveActivities(oldActs: LocalIDMap<LocalLegActivity>| unde
 
         // console.log('old IDs: ', oldIDs);
         // console.log('new IDs: ', newIDs);
-        // console.log('diff: ', diff);
+        // console.log('acts diff: ', diff);
 
         for(const act of diff) {
 
@@ -116,7 +136,7 @@ export async function saveActivities(oldActs: LocalIDMap<LocalLegActivity>| unde
 
         // console.log('old IDs: ', oldIDs);
         // console.log('new IDs: ', newIDs);
-        console.log('diff: ', diff);
+        // console.log('gacts diff: ', diff);
 
         for(const gact of diff) {
             let id = gact.id;
@@ -149,14 +169,7 @@ export async function saveActivities(oldActs: LocalIDMap<LocalLegActivity>| unde
             // console.log(act);
 
             if(act.id) {
-                retval = await client.models.LegActivity.update({
-                    id: act.id,
-                    activityPrototypeId: act.activityPrototypeId,
-                    startTime: act.startTime,
-                    supportName: act.supportName,
-                    shadow: act.shadow,
-                    leg: act.leg
-                });
+                retval = await client.models.LegActivity.update({ ...act, id: act.id});
 
                 // console.log('creating: ',retval.data);
             }
@@ -182,16 +195,9 @@ export async function saveActivities(oldActs: LocalIDMap<LocalLegActivity>| unde
         }
 
         if(gact.id) {
-            retval = await client.models.GlobalActivity.update({
-                id: gact.id,
-                startTime: gact.startTime,
-                name: gact.name,
-                duration: gact.duration,
-                scheduleId: gact.scheduleId
-            });
+            retval = await client.models.GlobalActivity.update({ ...gact, id: gact.id });
         }
         else {
-            console.log("creating global activity");
             retval = await client.models.GlobalActivity.create(gact);
         }
 
@@ -201,10 +207,10 @@ export async function saveActivities(oldActs: LocalIDMap<LocalLegActivity>| unde
             updatedGacts[time] = retval.data;
     }
 
-    console.log(updatedGacts);
+    // console.log(updatedGacts);
 
     return {
         acts: updatedActs,
-        gacts: updatedGacts
+        globalActs: updatedGacts
     };
 }

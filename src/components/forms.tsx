@@ -1,50 +1,41 @@
-import moment from "moment";
-
-let startDate = moment("2024-06-23 06:00:00.000");
-export const startTimeOptions: moment.Moment[] = [];
-
-for (let i = 0; i < 6; i++) {
-    // console.log(initDate.toLocaletimeString());
-    startTimeOptions.push(startDate.clone());
-    startDate.add(30, 'minutes');
-}
-
-let endDate = moment("2024-06-27 21:00:00.000");
-export const endTimeOptions: moment.Moment[] = [];
-
-for (let i = 0; i < 6; i++) {
-    // console.log(initDate.toLocaletimeString());
-    endTimeOptions.push(endDate.clone());
-    endDate.add(30, 'minutes');
-}
-
-export const timeFormatKey = (time: moment.Moment) => time.format("hh:mm A");
+import moment from 'moment';
+import { TIMEZONE, timeFormatKey } from '../utils/time';
 
 export type ScheduleSettings = {
     startDate?: string,
     endDate?: string,
     startTime?: string,
     endTime?: string,
-    name?: string
+    name?: string,
+    numLegs?: number
 }
 
 export function convertFormToDates(data: ScheduleSettings) {
-    let dayStart = moment(`${data.startTime} ${data.startDate}`, "hh:mm AA YYYY-MM-DD");
-    let dayEnd = moment(`${data.endTime} ${data.startDate}`, "hh:mm AA YYYY-MM-DD");
+    let dayStart = moment.tz(`${data.startTime} ${data.startDate}`, "hh:mm AA YYYY-MM-DD",TIMEZONE);
+    let dayEnd = moment.tz(`${data.endTime} ${data.startDate}`, "hh:mm AA YYYY-MM-DD", TIMEZONE);
+    let campEnd = moment.tz(`${data.endTime} ${data.endDate}`, "hh:mm AA YYYY-MM-DD",TIMEZONE);
+
     dayEnd.add(30,'minutes');
 
-    let numDays = moment(data.endDate, 'YYYY-MM-DD').diff(moment(data.startDate, 'YYYY-MM-DD'), 'days') + 1;
+    // console.log("Day start", dayStart);
+    // console.log("Day end", dayEnd);
+    // console.log("Camp end", campEnd)
+
+    let numDays = campEnd.diff(dayStart, 'days') + 1;
     let startDates = [];
     let endDates = [];
 
     for(let i=0; i<numDays; ++i) {
 
-        startDates.push(dayStart.toISOString());
-        endDates.push(dayEnd.toISOString());
+        startDates.push(timeFormatKey(dayStart));
+        endDates.push(timeFormatKey(dayEnd));
 
         dayStart.add(1, 'days');
         dayEnd.add(1, 'days');
     }
+
+    console.log(startDates);
+    console.log(endDates);
 
     return {
         startDates,

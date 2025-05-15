@@ -8,47 +8,64 @@
 //   "secondary":  #5f7e70
 // );
 
-@import 'colors.scss';
+@use 'colors.module.scss';
 // $primary: map-get($map: "theme-colors", $key: "primary");
 
 /* import bootstrap to set changes */
-@import '../../node_modules/bootstrap/scss/bootstrap.scss';
+// @use '../../node_modules/bootstrap/scss/bootstrap.scss';
 
-.btn-light {
-    border-color: $primary;
+.btn.btn-light {
+    border-color: colors.$primary;
+    background-color: white;
 
 
     &:hover {
-        background-color: rgba($secondary, 0.1);
-        border-color: inherit;
+        background-color: rgba(colors.$secondary, 0.1);
     }
 
-    &.btn:active {
-        background-color: rgba($secondary, 0.3);
+    &:active {
+        background-color: rgba(colors.$secondary, 0.3);
+    }
+}
+
+.btn.btn-primary {
+    background-color: colors.$primary;
+    border-color:  colors.$primary;
+
+    &:hover {
+        background-color: rgba(colors.$primary, 0.9);
+    }
+
+    &:active {
+        background-color: rgba(colors.$primary, 0.3);
+        // border-color: inherit;
     }
 }
 
 
 
 #main {
-    height: 100vh;
+    // height: 100vh;
     width: 100%;
     background-color: white;
     display: flex;
     flex-direction: column;
+    min-height: 100%;
 }
 
 #root {
     width: 100%;
+    height: 100%;
 }
 
 #app-container {
     flex-grow: 1;
+    display: flex;
 }
 
 body {
     margin: 0;
-    background: $primary;
+    background: colors.$primary;
     display: flex;
     font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
     height: 100vh;

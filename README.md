@@ -23,3 +23,13 @@ See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more inform
 ## License
 
 This library is licensed under the MIT-0 License. See the LICENSE file.
+
+## Troubleshooting
+
+`npx ampx sandbox` doesn't work:
+I had to do this after `npm update`-ing, some permissions issue
+https://github.com/aws-amplify/amplify-backend/issues/1862
+
+Now you have to use `npx ampx sandbox --profile amplify-default`
+
+

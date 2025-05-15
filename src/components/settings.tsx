@@ -4,9 +4,8 @@ import { useState } from 'react';
 import Form from 'react-bootstrap/Form';
 import Spinner from 'react-bootstrap/Spinner';
 import { useForm, SubmitHandler } from "react-hook-form"
-import type { Schema } from "../../amplify/data/resource";
 import '../styles/settings.scss';
-import { Row, Col, ButtonGroup } from 'react-bootstrap';
+import { Col, ButtonGroup } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPenToSquare, faTrashCan } from '@fortawesome/free-solid-svg-icons';
 import { mutateSchedule, Schedule } from '../api/apiSchedule';
@@ -14,9 +13,10 @@ import { useScheduleIDMatch } from '../utils/router';
 
 import moment from 'moment';
 
-import { timeFormatKey, startTimeOptions, endTimeOptions } from './forms';
+import { createTime, timeFormatLocal } from '../utils/time';
 
-type ActivityPrototype = Schema["ActivityPrototype"]["type"]
+import { ZONE_OPTIONS } from '../analyzer/defines';
+import { ActivityPrototype, CreateActivityPrototype } from '../api/apiActivityPrototype';
 
 enum SettingsView {
     GENERAL,
@@ -40,17 +40,21 @@ function ActivityListElement({ activity, setEditId, handleDelete }: ActivityList
             <Col>{activity.name}</Col>
             <Col>{activity.duration}</Col>
             <Col>{capitalize(activity.type?.toString())}</Col>
-            <Col>{capitalize(activity.zone?.toString())}</Col>
+            <Col>{capitalize(activity.zone?.name.toString())}</Col>
             <Col>{activity.isRequired ? "Yes" : "No"}</Col>
             <Col>{activity.groupSize}</Col>
             <Col>{activity.preferredDays?.join(",")}</Col>
-            <Col className='final'>
-                <ButtonGroup className="hide">
+            <Col className='final edit-proto'>
+                <ButtonGroup>
                     <Button onClick={() => setEditId(activity.id)} size="sm" variant="light">
                         <FontAwesomeIcon icon={faPenToSquare} />
                     </Button>
-                    <Button onClick={() => handleDelete(activity.id)} size="sm" variant="danger">
-                        <FontAwesomeIcon icon={faTrashCan} />
+                    <Button onClick={() => {
+                        if(window.confirm(`Are you sure you want to delete "${activity.name}"?`)) {
+                            handleDelete(activity.id)
+                        }
+                    }} size="sm" variant="light">
+                        <FontAwesomeIcon icon={faTrashCan} color="#dc3545"/>
                     </Button>
                 </ButtonGroup>
 
@@ -60,9 +64,9 @@ function ActivityListElement({ activity, setEditId, handleDelete }: ActivityList
 }
 
 interface ActivityAddElementProps {
-    handleSave: (data: ActivityPrototype) => void,
+    handleSave: (data: CreateActivityPrototype) => void,
     saving: boolean,
-    activeActivity?: ActivityPrototype
+    activeActivity?: CreateActivityPrototype
 }
 
 function ActivityAddElement({ saving, handleSave, activeActivity }: ActivityAddElementProps) {
@@ -71,13 +75,17 @@ function ActivityAddElement({ saving, handleSave, activeActivity }: ActivityAddE
         handleSubmit,
         formState: { errors },
         reset
-    } = useForm<ActivityPrototype>({ values: activeActivity });
+    } = useForm<CreateActivityPrototype>({ values: activeActivity });
 
     const match = useScheduleIDMatch();
     const scheduleId = match?.params.scheduleId as string;
 
-    const onSubmit: SubmitHandler<ActivityPrototype> = async (data) => {
-        handleSave({...data, scheduleId: scheduleId});
+    const onSubmit: SubmitHandler<CreateActivityPrototype> = async (data) => {
+        handleSave({
+            ...data, 
+            zone: ZONE_OPTIONS[data.zone?.name as keyof typeof ZONE_OPTIONS],
+            scheduleId: scheduleId
+        });
         // console.log("submitting");
         // console.log(data);
 
@@ -117,11 +125,13 @@ function ActivityAddElement({ saving, handleSave, activeActivity }: ActivityAddE
                 </Form.Select>
             </Col>
             <Col >
-                <Form.Select defaultValue="" {...register("zone", { required: true })} isInvalid={!!errors.zone}>
+                <Form.Select defaultValue="" {...register("zone.name", { required: true })} isInvalid={!!errors.zone}>
                     <option disabled value="">select</option>
-                    <option value="ridge">Ridge</option>
-                    <option value="waterfront">Waterfront</option>
-                    <option value="central">Central</option>
+                    {Object.values(ZONE_OPTIONS).map(zone => (
+                        <option key={zone.name} value={zone.name}>
+                            {zone.name.charAt(0).toUpperCase() + zone.name.slice(1)}
+                        </option>
+                    ))}
                 </Form.Select>
             </Col>
             <Col>
@@ -183,7 +193,7 @@ function GeneralSettings() {
 
     const schQuery = useScheduleQuery(scheduleId);
 
-    const endTime = moment(schQuery.data?.endDates[schQuery.data?.endDates.length-1]);
+    const endTime = createTime(schQuery.data?.endDates[schQuery.data?.endDates.length-1]);
     endTime.subtract(30,'minutes');
 
     const {
@@ -192,10 +202,10 @@ function GeneralSettings() {
         formState: { errors }
     } = useForm<ScheduleSettings>({ values: {
         name: schQuery.data?.name ? schQuery.data.name : undefined,
-        startDate: moment(schQuery.data?.startDates[0]).format("YYYY-MM-DD"),
-        endDate: moment(schQuery.data?.endDates[schQuery.data?.endDates.length-1]).format("YYYY-MM-DD"),
-        startTime: timeFormatKey(moment(schQuery.data?.startDates[0])),
-        endTime: timeFormatKey(endTime)
+        startDate: createTime(schQuery.data?.startDates[0]).format("YYYY-MM-DD"),
+        endDate: createTime(schQuery.data?.endDates[schQuery.data?.endDates.length-1]).format("YYYY-MM-DD"),
+        startTime: timeFormatLocal(createTime(schQuery.data?.startDates[0])),
+        endTime: timeFormatLocal(endTime)
     } });
 
 
@@ -221,12 +231,15 @@ function GeneralSettings() {
 
     const [saving, setSaving] = useState(false);
 
-    const validateTimes: Validate<string | undefined, ScheduleSettings> = (_, formValues) => {
-        let startTime = moment(formValues.startTime, "hh:mm A");
-        let endTime = moment(formValues.endTime, "hh:mm A");
+    // const validateTimes: Validate<string | undefined, ScheduleSettings> = (_, formValues) => {
+    //     let startTime = createTime(formValues.startTime);
+    //     let endTime = createTime(formValues.endTime);
 
-        return startTime && endTime && startTime.diff(endTime) < 0;
-    }
+    //     // console.log("Start Time", startTime);
+    //     // console.log("End Time", endTime);
+
+    //     return startTime && endTime && startTime.diff(endTime) < 0;
+    // }
 
     const validateDates: Validate<string | undefined, ScheduleSettings> = (_, formValues) => {
         let startDate = moment(formValues.startDate, "YYYY-MM-DD");
@@ -240,6 +253,9 @@ function GeneralSettings() {
         setSaving(true);
 
         const { startDates, endDates } = convertFormToDates(data);
+
+        // console.log("Start Date", startDates);
+        // console.log("End Date", endDates);
 
         mutation.mutate({
             name: data.name,
@@ -259,7 +275,7 @@ function GeneralSettings() {
                         Please enter a name.
                     </Form.Control.Feedback>
                 </Form.Group>
-                <Row>
+                {/* <Row>
                     <Col>
                         <Form.Group className="form-group">
                             <Form.Label>Start Date</Form.Label>
@@ -283,13 +299,11 @@ function GeneralSettings() {
                     <Col>
                         <Form.Group className="form-group">
                             <Form.Label>Start Time</Form.Label>
-                            <Form.Select {...register("startTime", {
-                                validate: validateTimes
-                            })}
+                            <Form.Select {...register("startTime")}
                                 isInvalid={!!errors.startTime}
 
                             >
-                                {startTimeOptions.map((el, _) => <option key={timeFormatKey(el)} value={timeFormatKey(el)}>{el.format("h:mm A")}</option>)}
+                                {startTimeOptions.map((el, _) => <option key={timeFormatKey(el)} value={timeFormatLocal(el)}>{timeFormatLocal(el)}</option>)}
                             </Form.Select>
                             <Form.Text>The time that the schedule should start from each day</Form.Text>
                             <Form.Control.Feedback type="invalid">
@@ -301,7 +315,7 @@ function GeneralSettings() {
                         <Form.Group className="form-group">
                             <Form.Label>End Time</Form.Label>
                             <Form.Select {...register("endTime", { required: true })} isInvalid={!!errors.startTime}>
-                                {endTimeOptions.map((el, _) => <option key={timeFormatKey(el)} value={timeFormatKey(el)}>{el.format("h:mm A")}</option>)}
+                                {endTimeOptions.map((el, _) => <option key={timeFormatKey(el)} value={timeFormatLocal(el)}>{timeFormatLocal(el)}</option>)}
                             </Form.Select>
                             <Form.Text>The time that the schedule should end at each day</Form.Text>
                             <Form.Control.Feedback type="invalid">
@@ -309,29 +323,25 @@ function GeneralSettings() {
                             </Form.Control.Feedback>
                         </Form.Group>
                     </Col>
-                </Row>
+                </Row> */}
                 <div className="modal-footer-div">
-                    <Button variant="primary" type="submit" disabled={saving}>
-                        {saving ?
-                            <Spinner as="span"
-                                animation="border"
-                                size="sm"
-                                role="status"
-                                style={{ marginRight: "5px" }}
-                            /> : <></>
-                        }
-                        Save Changes
+                    <Button variant="danger">
+                        Delete Schedule
                     </Button>
+                    <SpinnerButton loading={saving} variant="primary" type="submit">
+                        Save Changes
+                    </SpinnerButton>
                 </div>
             </Form>
         </div>
     )
 }
 
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { mutateActivityPrototype, deleteActivityPrototype } from '../api/apiActivityPrototype';
 import { range } from 'lodash';
 import { useActivityPrototypesQuery, useScheduleQuery } from '../queries';
+import { SpinnerButton } from '../utils/button';
 
 // const emptyActivity: Activity = {} as Activity;
 
@@ -358,6 +368,8 @@ function ManagerSettings() {
         }
     });
 
+    const queryClient = useQueryClient();
+
     const deleteAct = useMutation({
         mutationFn: deleteActivityPrototype,
         onSuccess: async () => {
@@ -368,6 +380,9 @@ function ManagerSettings() {
             setEditId("");
 
             emitToast(`Error deleting prototype: ${error.message}`, ToastType.Error);
+        },
+        onMutate: () => {
+            queryClient.invalidateQueries({ queryKey: ["allActivities", scheduleId] });
         }
     });
 

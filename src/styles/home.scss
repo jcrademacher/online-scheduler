@@ -1,3 +1,4 @@
+@use 'colors.module.scss' as colors;
 
 .btn-stick-right {
     float: right;
@@ -11,13 +12,12 @@
 
 #home-page {
     display: flex;
-    flex-direction: row;
     // padding: 10px;
-    height: 100%;
+    flex-grow: 1;
 
     #content {
         width: 100%;
-        padding: min(8%,30px) min(10%,60px);
+        padding: 20px;
         display: flex;
         flex-direction: column;
 
@@ -31,12 +31,45 @@
     
 }
 
+#status-bar {
+    margin-bottom: 5px;
+    
+    #info-bar {
+        padding-left: 5px;
+        padding-right: 5px;
+        display: flex;
+        flex-direction: column-reverse;
+    }
+
+    #analysis-bar {
+        display: flex;
+        align-items: center;
+        justify-content: right;
+
+
+    }
+
+    .analysis-count {
+        padding-left: 5px;
+        padding-right: 2px;
+    }
+
+    #last-saved {
+        color: gray;
+        font-size: 12px;
+        display: flex;
+        justify-content: right;
+    }
+}
+
+
+
 #view-control {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: 50% 1fr auto;
+    grid-template-rows: 1fr;
+    margin-bottom: 5px;
+    
 
     .btn {
         font-size: 14px;
@@ -51,9 +84,20 @@
     }
     
     #view-subselect {
+        grid-column: 1 / span 1;
+        
         .btn {
             border-radius: 40px;
             margin-right: 5px;
+        }
+    }
+
+    #action-btns {
+        display: flex;
+        flex-direction: row-reverse;
+
+        .btn {
+            margin-left: 5px;
         }
     }
 }
@@ -71,5 +115,148 @@
     height: 4px;
     background-color: rgb(196, 196, 196);
     margin: 20px 0px;
+}
+
+.scheduler-container {
+    display: flex;
+    width: 100%;
+    // height: calc(100vh - 120px);
+    // position: relative;
+    flex-grow: 1;
+}
+
+.analysis-pane {
+    width: 30%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    
+    // background-color: #f8f9fa;
+    // border-left: 1px solid #dee2e6;
+    // overflow: hidden;
+    border: 1px solid black;
+    margin-left: 10px;
+    border-radius: 10px;
+    transition: width 0.3s ease;
+    // transition: opacity 0.3s ease;
+    
+    // flex-basis: 100%;
+
+    &.hidden {
+        // display: none;
+        width: 0;
+        // overflow:unset;
+        border: none;
+        margin: 0;
+        opacity: 0;
+        // white-space: nowrap;
+        // overflow: hidden;
+        // overflow-x: auto;
+    }
+
+    &.visible {
+        width: 20%;
+        min-width: 200px;
+        // white-space: nowrap;
+        opacity: 1;
+    }
+
+    h3 {
+        margin: 0;
+        // padding: 0;
+        font-size: 14px;
+    }
+
+    .analysis-pane-header {
+        // padding: 11.5px;
+        border-bottom: 1px solid #dee2e6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        height: 40px;
+        padding-left: 10px;
+        // background-color: colors.$primary;
+
+        
+
+        .analysis-actions {
+            display: flex;
+            height: 100%;
+            
+            
+            .btn {
+                padding-left: 5px;
+                padding-right: 5px;
+                border: 0;
+                border-radius: 0px;
+                // background-color: #f8f9fa;
+                margin: 0;
+                min-width: 30px;
+                
+                // min-width: 50px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-size: 12px;
+
+                &.close-btn {
+                    border-left: 1px solid #dee2e6;
+                }
+            }
+        }
+    }
+
+    .analysis-pane-content {
+        overflow-y: scroll;
+        padding: 10px;
+        font-size: 11px;
+        height: 0px;
+        flex-grow: 1;
+
+
+        &::-webkit-scrollbar {
+            display: none;
+        }
+        // position: absolute;
+        // white-space: wrap;
+
+        .analysis-section {
+            display: flex;
+            flex-direction: column;
+            // overflow: hidden;
+
+            ul {
+                padding-left: 12px;
+            }
+
+            .analysis-section-header {
+                cursor: pointer;
+                font-size: 14px;
+            }
+
+            .analysis-section-content {
+                flex-grow: 1;
+                display: grid;
+                grid-template-rows: 0fr;
+                transition: grid-template-rows 0.3s ease-out;
+
+                &.show {
+                    grid-template-rows: 1fr;
+                    // overflow: hidden;
+                }
+                
+
+                .inner {
+                    overflow: hidden;
+                    
+
+                    
+                }
+
+            }
+            // height: 0px;
+            // overflow: hidden;
+        }
+    }
 }
 

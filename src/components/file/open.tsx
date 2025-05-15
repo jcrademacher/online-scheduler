@@ -25,7 +25,7 @@ function ScheduleListElement({ schedule, handleSelect, selected }: ScheduleListE
     let endDate = moment(schedule.endDates[schedule.endDates.length - 1]);
 
     let formatStr = 'MMM D, YYYY [at] h:mm a';
-    let createdAt = moment(schedule.createdAt);
+    let updatedAt = moment(schedule.updatedAt);
 
     let formatStrCampDates = `MMM D [- ${endDate.format('MMM D')}], YYYY`;
 
@@ -33,7 +33,7 @@ function ScheduleListElement({ schedule, handleSelect, selected }: ScheduleListE
         <div onClick={handleSelect} className={`list-element row-grid ${selected ? "selected" : ""}`}>
             <Col>{schedule.name}</Col>
             <Col>{startDate.format(formatStrCampDates)}</Col>
-            <Col>{createdAt.format(formatStr)}</Col>
+            <Col>{updatedAt.format(formatStr)}</Col>
         </div>
     )
 }
@@ -56,7 +56,7 @@ export function FileOpenModal({ handleCancel }: FileOpenModalProps) {
 
     const handleOpen = () => {
         setOpening(true);
-
+        
         handleCancel();
         navigateToSchedule(navigate, selectedId);
     }

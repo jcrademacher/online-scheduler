@@ -1,4 +1,4 @@
-@import 'colors.scss';
+@use 'colors.module.scss';
 
 #nav {
     // position: fixed;
@@ -7,7 +7,7 @@
     // z-index: 999;
     width: 100%;
     height: 50px;
-    background-color: $primary;
+    background-color: colors.$primary;
     color: white;
     display: flex;
     align-items: center;
@@ -31,12 +31,12 @@
     right: 10px;
     
     border-radius: 8px;
-    border: 1px solid $secondary;
+    border: 1px solid colors.$secondary;
     padding: 4px 14px;
     font-size: 1em;
     font-weight: 500;
     font-family: inherit;
-    background-color: $primary;
+    background-color: colors.$primary;
     cursor: pointer;
     transition: border-color 0.25s;
     color: white;

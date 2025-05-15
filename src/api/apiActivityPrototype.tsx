@@ -3,6 +3,7 @@ import type { Schema } from "../../amplify/data/resource.ts";
 import { client } from './index.tsx'
 
 export type ActivityPrototype = Schema["ActivityPrototype"]["type"];
+export type CreateActivityPrototype = Schema["ActivityPrototype"]["createType"];
 export type ActivityPrototypeMap = {
     [id: string]: ActivityPrototype
 }
@@ -41,14 +42,14 @@ export async function getActivityPrototypesMapped(scheduleId: string): Promise<A
     return retval;
 }
 
-export async function mutateActivityPrototype(data: ActivityPrototype): Promise<void> {
+export async function mutateActivityPrototype(data: ActivityPrototype | CreateActivityPrototype): Promise<void> {
     let retval;
 
     if (data.id) {
-        retval = await client.models.ActivityPrototype.update(data);
+        retval = await client.models.ActivityPrototype.update(data as ActivityPrototype);
     }
     else {
-        retval = await client.models.ActivityPrototype.create(data);
+        retval = await client.models.ActivityPrototype.create(data as CreateActivityPrototype);
     }
 
     if(!retval.errors) {

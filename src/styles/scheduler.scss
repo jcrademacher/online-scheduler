@@ -1,4 +1,4 @@
-@import './colors.scss';
+@use 'colors.module.scss';
 
 $border-radius: 10px;
 
@@ -17,6 +17,7 @@ $border-radius: 10px;
     font-size: 9px;
     user-select: none;
     -webkit-user-select: none;
+    // box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
 
     // grid-auto-rows: min-content;
     // grid-template-rows: repeat(5, 20%);
@@ -32,7 +33,7 @@ $border-radius: 10px;
         align-items: center;
         justify-content: center;
         text-align: center;
-        background-color: rgb(226, 226, 226);
+        background-color: colors.$time;
         text-wrap: nowrap;
         overflow: hidden;
 
@@ -50,7 +51,7 @@ $border-radius: 10px;
     
 
     .global-activity {
-        background-color: rgb(45, 70, 92);
+        background-color: colors.$global;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -90,11 +91,23 @@ $border-radius: 10px;
         }
 
         &.element {
-            background-color: $highlight;
+            background-color: colors.$element;
         }
     
         &.program {
-            background-color: #e1f7df;
+            background-color: colors.$program;
+        }
+
+        &.error {
+            // border: 1px solid colors.$error;
+            // border-radius: 2px;
+            box-shadow: inset 0 0 10px -2px colors.$error;
+        }
+
+        &.warning {
+            // border: 1px solid colors.$warning;  
+            // border-radius: 2px;
+            box-shadow: inset 0 0 10px 10px colors.$warning;
         }
     }
 
@@ -112,7 +125,6 @@ $border-radius: 10px;
         &:hover, &.hover-class {
             background-color: #e1f7df;
         }
-
 
         &.dragging {
             background-color: rgb(224, 231, 236);
@@ -132,6 +144,9 @@ $border-radius: 10px;
         }
     }
 
+
+
+
     .scheduled {
         background-color: rgb(194, 194, 194);
         display: flex;
@@ -139,6 +154,18 @@ $border-radius: 10px;
         justify-content: center;
         font-size: 14px;
         cursor: pointer;
+
+        &.warning {
+            box-shadow: inset 0 0 10px 0px colors.$warning;
+            z-index: 1;
+        }
+
+        &.error {
+            box-shadow: inset 0 0 10px 0px colors.$error;
+            z-index: 1;
+        }
+    
+        
     }
 
     .activity-popover {
@@ -148,6 +175,7 @@ $border-radius: 10px;
         // padding: 2px;
         border: 1px solid black;
         box-shadow: 4px 4px 10px rgb(113, 113, 113);
+        z-index: 2;
 
         #header {
             border-bottom: 1px solid black;
@@ -173,6 +201,19 @@ $border-radius: 10px;
             margin-top: 5px;
             display: flex;
         }
+    }
+}
+
+.activity-analysis-tooltip {
+    font-size: 10px;
+    text-align: left;
+
+    .error {
+        color: colors.$error;
+    }
+
+    .warning {
+        color: colors.$warning;
     }
 }
 
