@@ -45,7 +45,7 @@ const schema = a.schema({
             endDates: a.datetime().required().array().required(),
             activityPrototypes: a.hasMany('ActivityPrototype', 'scheduleId'),
             globalActivities: a.hasMany('GlobalActivity', 'scheduleId'),
-            numLegs: a.integer().required().default(12),
+            numLegs: a.integer().default(12),
             analyses: a.ref("Analyses")
         })
         .authorization((allow) => [
@@ -76,6 +76,12 @@ const schema = a.schema({
         })
         .authorization((allow) => [allow.authenticated()]),
 
+    Zone: a.customType({
+        name: a.string(),
+        xtime: a.integer(), // time in minutes as a proxy for distance, can be negative
+        ytime: a.integer() // time in minutes as a proxy for distance, can be negative
+    }),
+
     ActivityPrototype: a
         .model({
             activities: a.hasMany('LegActivity', 'activityPrototypeId'),
@@ -87,13 +93,9 @@ const schema = a.schema({
             preferredDays: a.integer().required().array(),
             requiredDays: a.integer().required().array(),
             groupSize: a.integer().required().validate((v) => v.gte(1)),
-            enforceDays: a.boolean().required().default(false),
+            enforceDays: a.boolean().default(false),
             aliasPrototypeId: a.id(),
-            zone: a.customType({
-                name: a.string().required().default(""),
-                xtime: a.integer().required().default(0), // time in minutes as a proxy for distance, can be negative
-                ytime: a.integer().required().default(0) // time in minutes as a proxy for distance, can be negative
-            }),
+            zone: a.ref("Zone"),
             isRequired: a.boolean().default(false)
         })
         .authorization((allow) => [allow.authenticated()])
@@ -104,11 +106,7 @@ export type Schema = ClientSchema<typeof schema>;
 export const data = defineData({
     schema,
     authorizationModes: {
-        defaultAuthorizationMode: "userPool",
-        // // API Key is used for a.allow.public() rules
-        // apiKeyAuthorizationMode: {
-        //     expiresInDays: 30,
-        // },
+        defaultAuthorizationMode: "userPool"
     }
 });
 

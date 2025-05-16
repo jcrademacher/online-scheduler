@@ -40,7 +40,7 @@ function ActivityListElement({ activity, setEditId, handleDelete }: ActivityList
             <Col>{activity.name}</Col>
             <Col>{activity.duration}</Col>
             <Col>{capitalize(activity.type?.toString())}</Col>
-            <Col>{capitalize(activity.zone?.name.toString())}</Col>
+            <Col>{capitalize(activity.zone?.name?.toString())}</Col>
             <Col>{activity.isRequired ? "Yes" : "No"}</Col>
             <Col>{activity.groupSize}</Col>
             <Col>{activity.preferredDays?.join(",")}</Col>
@@ -128,8 +128,8 @@ function ActivityAddElement({ saving, handleSave, activeActivity }: ActivityAddE
                 <Form.Select defaultValue="" {...register("zone.name", { required: true })} isInvalid={!!errors.zone}>
                     <option disabled value="">select</option>
                     {Object.values(ZONE_OPTIONS).map(zone => (
-                        <option key={zone.name} value={zone.name}>
-                            {zone.name.charAt(0).toUpperCase() + zone.name.slice(1)}
+                        <option key={zone.name} value={zone.name as string}>
+                            {zone.name ? zone.name.charAt(0).toUpperCase() + zone.name.slice(1) : "None"}
                         </option>
                     ))}
                 </Form.Select>

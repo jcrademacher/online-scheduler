@@ -87,7 +87,7 @@ export async function analyzeSchedule(schedule: Schedule, acts: LocalIDMap<Local
 function extractLegSchedules(schedule: Schedule, acts: LocalIDMap<LocalLegActivity>, gacts: TimeMap<LocalGlobalActivity>): LegSchedule[] {
     const legSchedules = [];
     
-    for(let legNumber = 1; legNumber <= schedule.numLegs; legNumber++) {
+    for(let legNumber = 1; legNumber <= (schedule.numLegs ?? 0); legNumber++) {
         // Create an array to store all activities
         let allActivities: (LocalLegActivity | LocalGlobalActivity)[] = [];
         
@@ -272,7 +272,12 @@ function analyzeTravelTime(legSchedules: LegSchedule[], protos: ActivityPrototyp
             }
 
             if(currentZone && nextZone) {
-                const travelTimeMinutes = Math.sqrt(Math.pow(currentZone.xtime - nextZone.xtime, 2) + Math.pow(currentZone.ytime - nextZone.ytime, 2));  
+                const currentX = currentZone.xtime ?? 0;
+                const currentY = currentZone.ytime ?? 0;
+                const nextX = nextZone.xtime ?? 0;
+                const nextY = nextZone.ytime ?? 0;
+
+                const travelTimeMinutes = Math.sqrt(Math.pow(currentX - nextX, 2) + Math.pow(currentY - nextY, 2));  
                 const availableTimeMinutes = nextStartTime.diff(currentEndTime, 'minutes');
 
                 travelSum += travelTimeMinutes;
@@ -328,8 +333,8 @@ function analyzeOverlap(schedule: Schedule, acts: LocalIDMap<LocalLegActivity>, 
         var time = dayStarts[day].clone();
         var thisDayEnd = dayEnds[day].clone();
 
-        var activeLegs: number[] = Array(schedule.numLegs).fill(0);
-        var oldActivities: LocalLegActivity[] = Array(schedule.numLegs).fill(undefined);
+        var activeLegs: number[] = Array(schedule.numLegs ?? 0).fill(0);
+        var oldActivities: LocalLegActivity[] = Array(schedule.numLegs ?? 0).fill(undefined);
 
         // loop through each time slot
         while(time.diff(thisDayEnd) < 0) {
@@ -389,7 +394,7 @@ function analyzeRepetition(schedule: Schedule, acts: LocalIDMap<LocalLegActivity
         // locations[protoId] = {};
 
         var legActivityCounts: Record<number, LocalLegActivity[]> = {};
-        for(let leg = 1; leg <= schedule.numLegs; leg++) {
+        for(let leg = 1; leg <= (schedule.numLegs ?? 0); leg++) {
             legActivityCounts[leg] = [];
         }
 

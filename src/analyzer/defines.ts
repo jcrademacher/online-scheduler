@@ -1,8 +1,6 @@
-export type Zone = {    
-    xtime: number,
-    ytime: number,
-    name: string
-}
+import type { Schema } from "../../amplify/data/resource.ts";
+
+export type Zone = Schema["Zone"]["type"];
 
 export const ZONE_OPTIONS: { [key: string]: Zone } = {
     ridge: { xtime: 10, ytime: 0, name: "ridge" },
