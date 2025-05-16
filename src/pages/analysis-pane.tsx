@@ -1,8 +1,7 @@
 import { AnalysisResult } from "../analyzer";
-import { ButtonGroup, Button, Spinner } from 'react-bootstrap';
+import { Button, Spinner } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronUp, faChevronDown, faCircleInfo, faCircleXmark, faEraser, faScrewdriverWrench, faTriangleExclamation, faXmark, IconDefinition } from '@fortawesome/free-solid-svg-icons';
-import { SpinnerButton } from "../utils/button";
+import { faChevronUp, faChevronDown, faCircleInfo, faCircleXmark, faEraser, faScrewdriverWrench, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { useEffect, useState } from "react";
 
 interface AnalysisPaneProps {

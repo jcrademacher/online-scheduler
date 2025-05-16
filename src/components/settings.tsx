@@ -183,7 +183,6 @@ function ActivityAddElement({ saving, handleSave, activeActivity }: ActivityAddE
     )
 }
 
-import { Validate } from 'react-hook-form';
 import { emitToast, ToastType } from './notifications';
 import { ScheduleSettings, convertFormToDates } from './forms';
 
@@ -231,24 +230,6 @@ function GeneralSettings() {
 
     const [saving, setSaving] = useState(false);
 
-    // const validateTimes: Validate<string | undefined, ScheduleSettings> = (_, formValues) => {
-    //     let startTime = createTime(formValues.startTime);
-    //     let endTime = createTime(formValues.endTime);
-
-    //     // console.log("Start Time", startTime);
-    //     // console.log("End Time", endTime);
-
-    //     return startTime && endTime && startTime.diff(endTime) < 0;
-    // }
-
-    const validateDates: Validate<string | undefined, ScheduleSettings> = (_, formValues) => {
-        let startDate = moment(formValues.startDate, "YYYY-MM-DD");
-        let endDate = moment(formValues.endDate, "YYYY-MM-DD");
-
-        // return startDate && endDate && (startDate.diff(endDate) < 0 && endDate.diff(startDate,'days') <= 7);
-        return startDate.isValid() && endDate.isValid() && startDate.diff(endDate) < 0 && endDate.diff(startDate, 'days') <= 7;
-    }
-
     const onSubmit: SubmitHandler<ScheduleSettings> = async (data) => {
         setSaving(true);
 
@@ -275,55 +256,7 @@ function GeneralSettings() {
                         Please enter a name.
                     </Form.Control.Feedback>
                 </Form.Group>
-                {/* <Row>
-                    <Col>
-                        <Form.Group className="form-group">
-                            <Form.Label>Start Date</Form.Label>
-                            <Form.Control type="date" {...register("startDate", { validate: validateDates })} isInvalid={!!errors.startDate} />
-                            <Form.Control.Feedback type="invalid">
-                                Please select a date. Start date must be before end date.
-                            </Form.Control.Feedback>
-                        </Form.Group>
-                    </Col>
-                    <Col>
-                        <Form.Group className="form-group">
-                            <Form.Label>End Date</Form.Label>
-                            <Form.Control type="date" {...register("endDate", { validate: validateDates })} isInvalid={!!errors.endDate} />
-                            <Form.Control.Feedback type="invalid">
-                                Please select a date. End date must be after start date by no more than 7 days.
-                            </Form.Control.Feedback>
-                        </Form.Group>
-                    </Col>
-                </Row>
-                <Row>
-                    <Col>
-                        <Form.Group className="form-group">
-                            <Form.Label>Start Time</Form.Label>
-                            <Form.Select {...register("startTime")}
-                                isInvalid={!!errors.startTime}
 
-                            >
-                                {startTimeOptions.map((el, _) => <option key={timeFormatKey(el)} value={timeFormatLocal(el)}>{timeFormatLocal(el)}</option>)}
-                            </Form.Select>
-                            <Form.Text>The time that the schedule should start from each day</Form.Text>
-                            <Form.Control.Feedback type="invalid">
-                                Start time should be before end time.
-                            </Form.Control.Feedback>
-                        </Form.Group>
-                    </Col>
-                    <Col>
-                        <Form.Group className="form-group">
-                            <Form.Label>End Time</Form.Label>
-                            <Form.Select {...register("endTime", { required: true })} isInvalid={!!errors.startTime}>
-                                {endTimeOptions.map((el, _) => <option key={timeFormatKey(el)} value={timeFormatLocal(el)}>{timeFormatLocal(el)}</option>)}
-                            </Form.Select>
-                            <Form.Text>The time that the schedule should end at each day</Form.Text>
-                            <Form.Control.Feedback type="invalid">
-                                End time should be after start time.
-                            </Form.Control.Feedback>
-                        </Form.Group>
-                    </Col>
-                </Row> */}
                 <div className="modal-footer-div">
                     <Button variant="danger">
                         Delete Schedule
@@ -342,8 +275,6 @@ import { mutateActivityPrototype, deleteActivityPrototype } from '../api/apiActi
 import { range } from 'lodash';
 import { useActivityPrototypesQuery, useScheduleQuery } from '../queries';
 import { SpinnerButton } from '../utils/button';
-
-// const emptyActivity: Activity = {} as Activity;
 
 function ManagerSettings() {
     const [editId, setEditId] = useState("");
@@ -451,20 +382,10 @@ function SupportSettings() {
 type SettingsProps = {
     show?: boolean
     handleClose: Function
-    // handleSave: (data: Activity) => void,
-    // handleDelete: (id: string) => void,
-    // data: Activity,
-    // saving: boolean,
-    // deleting: boolean
 }
 
 export default function Settings({ show = false, handleClose }: SettingsProps) {
     const [settingsView, setSettingsView] = useState<SettingsView>(SettingsView.GENERAL);
-
-
-
-
-    // console.log(errors);
 
     function renderView() {
         switch (settingsView) {
@@ -481,7 +402,6 @@ export default function Settings({ show = false, handleClose }: SettingsProps) {
         <Modal id='settings-modal' show={show} size="lg" centered onHide={() => handleClose()}>
             <Modal.Header closeButton>
                 <Modal.Title>Settings</Modal.Title>
-                {/* <Modal.Title>{data.id ? "Edit activity" : "Add activity"}</Modal.Title> */}
             </Modal.Header>
             <Modal.Body>
                 <div id="settings">

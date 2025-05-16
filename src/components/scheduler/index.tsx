@@ -1,6 +1,6 @@
 import { View } from '../../pages/scheduling-page'
 import '../../styles/scheduler.scss'
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import moment from 'moment';
 import { checkActivityCreate, checkGlobalActivityCreate, ScheduledGlobalActivity } from './activities';
 
@@ -59,7 +59,8 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
     // context
     // const fileContext = useFileContext();
 
-    const activities = actProtoQuery.data ? actProtoQuery.data : {};
+    
+    const activityPrototypes = actProtoQuery.data ? actProtoQuery.data : {};
 
     let { state, set, undo, redo, canRedo, canUndo } = useHistoryState<ScheduleObject>({
         acts: {},
@@ -83,15 +84,6 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
         }
     }, [actsQuery.data]);
 
-    // useEffect(() => {
-    //     if (actsQuery.data && actProtoQuery.data) {
-    //         console.log("Analyzed");
-    //         analyzeSchedule(localSch.acts, actProtoQuery.data).then((data) => {
-                
-    //             setAnalysis(data);
-    //         });
-    //     }
-    // }, [localSch]);
 
     const handleUndo = (evt: KeyboardEvent) => {
         evt.stopImmediatePropagation();
@@ -128,7 +120,7 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
     const saveSchMutation = useMutation({
         mutationKey: ['saveSchedule', scheduleId],
         mutationFn: async () => saveActivities(actsQuery.data?.acts, actsQuery.data?.globalActs, localSch.acts, localSch.globalActs),
-        onSuccess: (data) => {
+        onSuccess: () => {
             console.log("Success");   
         },
         onError: (error) => {
@@ -154,7 +146,7 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
         let oldId = oldAct.activityPrototypeId;
         let oldActs = { ...localSch.acts[oldId] };
 
-        let newActProto = activities[newId];
+        let newActProto = activityPrototypes[newId];
         let sameProto = newId === oldAct.activityPrototypeId;
 
         if (sameProto) {
@@ -172,7 +164,7 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
                 id: oldAct.id // Preserve the original ID if it exists
             };
 
-            let oldActProto = activities[oldAct.activityPrototypeId];
+            let oldActProto = activityPrototypes[oldAct.activityPrototypeId];
             let gsdiff = oldActProto.groupSize - newActProto.groupSize;
 
             if (gsdiff > 0) {
@@ -207,7 +199,7 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
         let newGacts = { ...localSch.globalActs };
         removeActivity(oldAct, newGacts);
 
-        let canCreate = checkGlobalActivityCreate(newTime, oldAct.duration, thisDayEnd, activities, localSch.acts, newGacts);
+        let canCreate = checkGlobalActivityCreate(newTime, oldAct.duration, thisDayEnd, activityPrototypes, localSch.acts, newGacts);
 
         if (canCreate) {
             addActivity(newAct, newGacts);
@@ -220,7 +212,7 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
         var newAct: LocalLegActivity;
 
         // console.log(existingAct);
-        let actProto = activities[id];
+        let actProto = activityPrototypes[id];
 
         newAct = {
             startTime: time.toISOString(),
@@ -258,7 +250,7 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
             };
 
             // console.log(newAct);
-            let canCreate = checkGlobalActivityCreate(startTime, duration, thisDayEnd, activities, localSch.acts, localSch.globalActs);
+            let canCreate = checkGlobalActivityCreate(startTime, duration, thisDayEnd, activityPrototypes, localSch.acts, localSch.globalActs);
 
             if (canCreate) {
                 // console.log(insertAt);
@@ -323,7 +315,7 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
                         key={startTime.toISOString()}
                         activeAct={gact}
                         timeIndex={timeIndex}
-                        span={Object.keys(activities).length}
+                        span={Object.keys(activityPrototypes).length}
                         handleDelete={handleDeleteGlobalActivity}
                         handleSave={handleSaveGlobalActivity}
                     />
@@ -351,11 +343,11 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
     const renderProtoHeaders: () => JSX.Element[] = () => {
         let retval = [];
 
-        let keylist = Object.keys(activities);
+        let keylist = Object.keys(activityPrototypes);
         
 
         for (let i = 0; i < keylist.length; ++i) {
-            let el = activities[keylist[i]];
+            let el = activityPrototypes[keylist[i]];
 
             const errors = analysis?.protoLocations[el.id]?.errorMessages || [];
             const warnings = analysis?.protoLocations[el.id]?.warningMessages || [];
@@ -483,7 +475,7 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
     }
     else if (actProtoQuery.isSuccess) {
         const containerStyle = {
-            gridTemplateColumns: `60px repeat(${Object.keys(activities).length}, 1fr)`,
+            gridTemplateColumns: `60px repeat(${Object.keys(activityPrototypes).length}, 1fr)`,
             gridTemplateRows: `40px repeat(${thisDayEnd.diff(thisDayStart, 'hours', true) * 2}, 1fr)`
         };
 
@@ -495,8 +487,8 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
                     {renderProtoHeaders()}
                     {renderGlobalActivities()}
                     {actsQuery.isLoading ?
-                        <LoadingActivitiesView rows={thisDayEnd.diff(thisDayStart, 'hours', true) * 2} cols={Object.keys(activities).length} /> :
-                        Object.values(activities).map(renderColumn)
+                        <LoadingActivitiesView rows={thisDayEnd.diff(thisDayStart, 'hours', true) * 2} cols={Object.keys(activityPrototypes).length} /> :
+                        Object.values(activityPrototypes).map(renderColumn)
                     }
                 </div>
             </DndProvider>
@@ -512,8 +504,7 @@ interface LoadingActivitiesViewProps {
 
 import { OverlayTrigger, Spinner, Tooltip } from 'react-bootstrap';
 import { timeFormatLocal } from '../../utils/time';
-import { useFileContext } from '../file/context-provider';
-import { AnalysisResult, analyzeSchedule } from '../../analyzer/index.js';
+import { AnalysisResult } from '../../analyzer/index.js';
 
 function LoadingActivitiesView({ rows, cols }: LoadingActivitiesViewProps) {
     // let retval: JSX.Element[] = [];

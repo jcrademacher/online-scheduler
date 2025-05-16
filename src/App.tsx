@@ -7,7 +7,7 @@ import { Routes, Route } from "react-router-dom";
 import NavBar from './components/navbar.js';
 import SchedulingView from './pages/scheduling-page.js';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 
 import { FileModal } from './components/file';
 import { FileNewModal } from './components/file/new.js';

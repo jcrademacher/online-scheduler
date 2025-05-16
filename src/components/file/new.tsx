@@ -16,7 +16,6 @@ import '../../styles/filenew.scss';
 
 import { timeFormatKey, timeFormatLocal, startTimeOptions, endTimeOptions, timeDateDummy } from '../../utils/time';
 import { ScheduleSettings } from "../forms";
-import { useSchedulesQuery } from "../../queries/";
 interface FileNewModalProps {
     handleCancel: () => void
 }
@@ -130,12 +129,11 @@ export function FileNewModal({ handleCancel }: FileNewModalProps) {
     const validateDates: Validate<string | undefined, ScheduleSettings> = (_, formValues) => {
         let startDate = moment(formValues.startDate, "YYYY-MM-DD");
         let endDate = moment(formValues.endDate, "YYYY-MM-DD");
-
-        // console.log(formValues.startDate, formValues.endDate);
-        // console.log(startDate, endDate);
-
+        console.log("Validating dates", startDate, endDate);
         // return startDate && endDate && (startDate.diff(endDate) < 0 && endDate.diff(startDate,'days') <= 7);
-        return startDate.isValid() && endDate.isValid() && startDate.diff(endDate) < 0 && endDate.diff(startDate, 'days') <= 7;
+        const retval = startDate.isValid() && endDate.isValid() && startDate.diff(endDate) < 0 && endDate.diff(startDate, 'days') <= 7;
+        console.log("retval", retval);
+        return retval;
     }
 
     return (
@@ -165,7 +163,7 @@ export function FileNewModal({ handleCancel }: FileNewModalProps) {
                     <Col>
                         <Form.Group className="form-group">
                             <Form.Label>Start Date</Form.Label>
-                            <Form.Control type="date" {...register("startDate", { validate: validateDates })} isInvalid={!!errors.startDate} />
+                            <Form.Control type="date" {...register("startDate", { validate: validateDates })} isInvalid={!!errors.startDate && !!errors.endDate} />
                             <Form.Control.Feedback type="invalid">
                                 Please select a date. Start date must be before end date.
                             </Form.Control.Feedback>
@@ -174,7 +172,7 @@ export function FileNewModal({ handleCancel }: FileNewModalProps) {
                     <Col>
                         <Form.Group className="form-group">
                             <Form.Label>End Date</Form.Label>
-                            <Form.Control type="date" {...register("endDate", { validate: validateDates })} isInvalid={!!errors.endDate} />
+                            <Form.Control type="date" {...register("endDate", { validate: validateDates })} isInvalid={!!errors.endDate && !!errors.startDate} />
                             <Form.Control.Feedback type="invalid">
                                 Please select a date. End date must be after start date by no more than 7 days.
                             </Form.Control.Feedback>

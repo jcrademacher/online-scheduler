@@ -1,7 +1,7 @@
 import '../styles/home.scss';
 import 'react-toastify/dist/ReactToastify.css';
 import Button from 'react-bootstrap/Button';
-import { faCircleInfo, faCircleXmark, faGear, faTriangleExclamation, faWandMagicSparkles, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faGear, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useState } from 'react';
 import { Scheduler } from '../components/scheduler';
@@ -133,7 +133,6 @@ import { useActivityPrototypesQuery, useScheduleQuery } from '../queries';
 import { useScheduleIDMatch } from '../utils/router';
 import { Spinner } from 'react-bootstrap';
 import { useFileContext } from '../components/file/context-provider';
-import { SpinnerButton } from '../utils/button';
 import { emitToast } from '../components/notifications';
 import { ToastType } from '../components/notifications';
 import { Schedule } from '../api/apiSchedule';
@@ -195,23 +194,6 @@ export default function ScheduleView({  }: ScheduleViewProps) {
                         show={showSettings}
                         handleClose={() => setShowSettings(false)}
                     />
-                    {/* <div>
-                        <Button className="btn-stick-left">New Schedule</Button>
-                        <Button className="btn-stick-left" variant="light">Open Schedule</Button>
-                        <Button
-                            variant='light'
-                            onClick={() => setShowSettings(true)}
-                            className='btn-stick-right'
-                        >
-                            <FontAwesomeIcon style={{ marginRight: "5px" }} icon={faGear} />
-                            Settings
-                        </Button>
-                        <Button className="btn-stick-right" variant="light">
-                            <FontAwesomeIcon style={{ marginRight: "5px" }} icon={faFloppyDisk} />
-                            Save
-                        </Button>
-                    </div>
-                    <div className="separator" /> */}
                     <StatusBar
                         view={view}
                         setView={setView}

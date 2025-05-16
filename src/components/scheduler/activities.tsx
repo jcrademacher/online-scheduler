@@ -425,7 +425,7 @@ export function ScheduledGlobalActivity({ activeAct, handleSave, handleDelete, t
     const {
         register,
         handleSubmit,
-        formState: { errors, dirtyFields},
+        formState: { errors },
         reset,
         watch,
         setValue

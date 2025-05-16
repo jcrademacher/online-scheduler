@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getSchedule, getSchedules } from "../api/apiSchedule";
 import { ActivityPrototypeMap, getActivityPrototypesMapped } from "../api/apiActivityPrototype";
-import { getActivitiesMapped, getAllActivitiesMapped, getGlobalActivitiesMapped } from "../api/apiActivity"; 
+import { getAllActivitiesMapped } from "../api/apiActivity"; 
 
 export function useScheduleQuery(id: string | undefined) {
     return useQuery({

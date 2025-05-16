@@ -5,7 +5,7 @@ import { createTime, dayOfCamp, getTotalScheduleSlotCount, timeFormatKey, timeFo
 import { ActivityPrototypeMap } from "../api/apiActivityPrototype"
 import { Schedule } from "../api/apiSchedule"
 import moment from "moment";
-import { EMPTY_HOURS_THRESHOLD, TRAVEL_TIME_WARNING_THRESHOLD, ZONE_OPTIONS } from "./defines"
+import { TRAVEL_TIME_WARNING_THRESHOLD, ZONE_OPTIONS } from "./defines"
 import { Zone } from "./defines"
 
 export type Analysis = {
@@ -319,7 +319,6 @@ function analyzeTravelTime(legSchedules: LegSchedule[], protos: ActivityPrototyp
 // }
 
 function analyzeOverlap(schedule: Schedule, acts: LocalIDMap<LocalLegActivity>, protos: ActivityPrototypeMap, analysisResult: AnalysisResult): void {
-    var locations = analysisResult.locations;
 
     let dayStarts: moment.Moment[] = schedule.startDates.map(createTime);
     let dayEnds: moment.Moment[] = schedule.endDates.map(createTime);
