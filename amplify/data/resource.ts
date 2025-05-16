@@ -59,6 +59,7 @@ const schema = a.schema({
             shadow: a.boolean().required(), // 0 = no shadow, 1 = shadow
             leg: a.integer().required().array().required(),
             supportName: a.string(),
+            leadershipName: a.string(),
             activityPrototypeId: a.id().required(),
             activityPrototype: a.belongsTo('ActivityPrototype', 'activityPrototypeId')
         })
@@ -81,11 +82,13 @@ const schema = a.schema({
             scheduleId: a.id(),
             schedule: a.belongsTo('Schedule', 'scheduleId'),
             name: a.string().required(),
-            duration: a.float().required(), // in hours
+            duration: a.float().required().validate((v) => v.gte(0.5)), // in hours
             type: a.string().required(),
             preferredDays: a.integer().required().array(),
             requiredDays: a.integer().required().array(),
-            groupSize: a.integer().required(),
+            groupSize: a.integer().required().validate((v) => v.gte(1)),
+            enforceDays: a.boolean().required().default(false),
+            aliasPrototypeId: a.id(),
             zone: a.customType({
                 name: a.string().required(),
                 xtime: a.integer().required(), // time in minutes as a proxy for distance, can be negative
@@ -106,7 +109,7 @@ export const data = defineData({
         apiKeyAuthorizationMode: {
             expiresInDays: 30,
         },
-    },
+    }
 });
 
 /*== STEP 2 ===============================================================
