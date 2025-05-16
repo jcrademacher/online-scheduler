@@ -90,11 +90,11 @@ const schema = a.schema({
             enforceDays: a.boolean().required().default(false),
             aliasPrototypeId: a.id(),
             zone: a.customType({
-                name: a.string().required(),
-                xtime: a.integer().required(), // time in minutes as a proxy for distance, can be negative
-                ytime: a.integer().required() // time in minutes as a proxy for distance, can be negative
+                name: a.string().required().default(""),
+                xtime: a.integer().required().default(0), // time in minutes as a proxy for distance, can be negative
+                ytime: a.integer().required().default(0) // time in minutes as a proxy for distance, can be negative
             }),
-            isRequired: a.boolean().required()
+            isRequired: a.boolean().default(false)
         })
         .authorization((allow) => [allow.authenticated()])
 });
