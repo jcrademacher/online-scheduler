@@ -300,6 +300,8 @@ function ManagerSettings() {
         onSuccess: async () => { 
             await query.refetch()
             setEditId("");
+
+            emitToast("Activity saved", ToastType.Success);
         },
         onError: (error) => {
             setEditId("");
@@ -315,6 +317,7 @@ function ManagerSettings() {
         onSuccess: async () => {
             await query.refetch()
             setEditId("");
+            emitToast("Activity deleted", ToastType.Success);
         },
         onError: (error) => {
             setEditId("");
