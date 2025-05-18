@@ -81,13 +81,22 @@ function ActivityAddElement({ saving, handleSave, activeActivity }: ActivityAddE
     const scheduleId = match?.params.scheduleId as string;
 
     const onSubmit: SubmitHandler<CreateActivityPrototype> = async (data) => {
-        handleSave({
+        let newActivity = {
             ...data, 
             zone: ZONE_OPTIONS[data.zone?.name as keyof typeof ZONE_OPTIONS],
             scheduleId: scheduleId
-        });
-        // console.log("submitting");
-        // console.log(data);
+        };
+
+        if(activeActivity) {
+            if(newActivity.duration !== activeActivity?.duration) {
+                emitToast("Duration cannot be changed for an existing activity", ToastType.Warning);
+            }
+
+            handleSave({...newActivity, duration: activeActivity.duration });
+        }
+        else {
+            handleSave(newActivity);
+        }
 
         if(!activeActivity) reset();
     };

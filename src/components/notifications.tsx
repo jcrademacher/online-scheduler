@@ -1,10 +1,10 @@
 import { Slide, toast, ToastOptions } from 'react-toastify';
 
 export enum ToastType {
-    Info,
-    Success,
-    Error,
-    Warning
+    Info = "Info",
+    Success = "Success",
+    Error = "Error",
+    Warning = "Warning"
 }
 
 const defaultOptions: ToastOptions = {
@@ -22,16 +22,16 @@ const defaultOptions: ToastOptions = {
 export function emitToast(message: string, type: ToastType) {
     switch (type) {
         case ToastType.Info:
-            toast.info(message, defaultOptions);
+            toast.info(`${type}: ${message}`, defaultOptions);
             break;
         case ToastType.Success:
-            toast.success(message, defaultOptions);
+            toast.success(`${type}: ${message}`, defaultOptions);
             break;
         case ToastType.Error:
-            toast.error(message, defaultOptions);
+            toast.error(`${type}: ${message}`, defaultOptions);
             break;
         case ToastType.Warning:
-            toast.warn(message, defaultOptions);
+            toast.warn(`${type}: ${message}`, defaultOptions);
             break;
     }
 }
