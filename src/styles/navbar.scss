@@ -26,28 +26,31 @@
     color: white;
 }
 
-#signout-button {
+.right-nav {
     position: absolute;
     right: 10px;
-    
-    border-radius: 8px;
-    border: 1px solid colors.$secondary;
-    padding: 4px 14px;
-    font-size: 1em;
-    font-weight: 500;
-    font-family: inherit;
-    background-color: colors.$primary;
-    cursor: pointer;
-    transition: border-color 0.25s;
-    color: white;
-    
-    
-    &:hover {
-        border-color: white;
-    }
-    
-    &:focus,
-    &:focus-visible {
-        outline: 4px auto -webkit-focus-ring-color;
+    display: flex;
+
+    #signout-button {
+        border-radius: 8px;
+        border: 1px solid colors.$secondary;
+        padding: 4px 14px;
+        font-size: 1em;
+        font-weight: 500;
+        font-family: inherit;
+        background-color: colors.$primary;
+        cursor: pointer;
+        transition: border-color 0.25s;
+        color: white;
+        
+        
+        &:hover {
+            border-color: white;
+        }
+        
+        &:focus,
+        &:focus-visible {
+            outline: 4px auto -webkit-focus-ring-color;
+        }
     }
 }

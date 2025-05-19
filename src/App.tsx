@@ -17,6 +17,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 import { LandingView } from './pages/landing.js';
 import { FileContextProvider } from './components/file/context-provider.js';
+import HelpPage from './pages/help-page.js';
 
 function App() {
 
@@ -60,6 +61,7 @@ function App() {
                                             <SchedulingView />
                                         } />
                                     </Route>
+                                    <Route path="/help" element={<HelpPage/>} />
                                 </Routes>
                             </div>
                             <ToastContainer />

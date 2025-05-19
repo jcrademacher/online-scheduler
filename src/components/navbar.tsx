@@ -1,8 +1,9 @@
 import '../styles/navbar.scss';
 import { UseAuthenticator } from '@aws-amplify/ui-react';
-import { Dropdown } from 'react-bootstrap';
+import { Button, Dropdown } from 'react-bootstrap';
 import { useAllActivitiesQuery, useScheduleQuery, useActivityPrototypesQuery } from '../queries';
 import { exportScheduleAsXLSX } from './file/exporter';
+import { useNavigate } from 'react-router-dom';
 
 interface NavBarProps {
     signOut: UseAuthenticator["signOut"] | undefined;
@@ -47,6 +48,8 @@ import { useScheduleIDMatch } from '../utils/router';
 import { useFileContext } from './file/context-provider';
 import { ToastType } from './notifications';
 import { emitToast } from './notifications';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCircleQuestion } from '@fortawesome/free-solid-svg-icons';
 
 function NavBar({ signOut, handleFileNew, handleFileOpen }: NavBarProps) {
 
@@ -60,6 +63,8 @@ function NavBar({ signOut, handleFileNew, handleFileOpen }: NavBarProps) {
     const actsQuery = useAllActivitiesQuery(scheduleId, actProtoQuery.data);
 
     const fileContext = useFileContext();
+
+    const navigate = useNavigate(); 
 
     const exportAction = async () => {
         await fileContext.saveSchedule();
@@ -96,12 +101,16 @@ function NavBar({ signOut, handleFileNew, handleFileOpen }: NavBarProps) {
 
     return (
         <div id="nav">
-            <button id="signout-button" onClick={() => { if (signOut) signOut() }}>Sign Out</button>
             <span>
                 <b>RYLA Scheduler</b>
             </span>
             <NavDropdown title="File" items={fileItems} />
-            {/* <NavDropdown title="View" items={viewItems}/> */}
+            <div className="right-nav">
+                <Button onClick={() => { navigate("/help") }}>
+                    <FontAwesomeIcon icon={faCircleQuestion}/>
+                </Button>
+                <button id="signout-button" onClick={() => { if (signOut) signOut() }}>Sign Out</button>
+            </div>
         </div>
     )
 }
