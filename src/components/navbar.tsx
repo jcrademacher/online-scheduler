@@ -50,6 +50,7 @@ import { ToastType } from './notifications';
 import { emitToast } from './notifications';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleQuestion } from '@fortawesome/free-solid-svg-icons';
+import { ScheduleObject } from './scheduler/types';
 
 function NavBar({ signOut, handleFileNew, handleFileOpen }: NavBarProps) {
 
@@ -67,10 +68,14 @@ function NavBar({ signOut, handleFileNew, handleFileOpen }: NavBarProps) {
     const navigate = useNavigate(); 
 
     const exportAction = async () => {
-        await fileContext.saveSchedule();
+        const newSchData: ScheduleObject = await fileContext.saveSchedule();
     
-        if (actsQuery.data && schQuery.data && actProtoQuery.data) {
-            exportScheduleAsXLSX(actProtoQuery.data, actsQuery.data, schQuery.data);
+        if (schQuery.data && actProtoQuery.data) {
+            // console.log(actsQuery.data)
+            exportScheduleAsXLSX(actProtoQuery.data, newSchData, schQuery.data);
+        }
+        else {
+            emitToast("Schedule or prototype queries unexpectedly were not available", ToastType.Error);
         }
     }
 
