@@ -1,7 +1,7 @@
 import '../styles/navbar.scss';
 import { UseAuthenticator } from '@aws-amplify/ui-react';
 import { Button, Dropdown } from 'react-bootstrap';
-import { useAllActivitiesQuery, useScheduleQuery, useActivityPrototypesQuery } from '../queries';
+import { useScheduleQuery, useActivityPrototypesQuery } from '../queries';
 import { exportScheduleAsXLSX } from './file/exporter';
 import { useNavigate } from 'react-router-dom';
 
@@ -61,7 +61,6 @@ function NavBar({ signOut, handleFileNew, handleFileOpen }: NavBarProps) {
 
     const actProtoQuery = useActivityPrototypesQuery(scheduleId);
     const schQuery = useScheduleQuery(scheduleId);
-    const actsQuery = useAllActivitiesQuery(scheduleId, actProtoQuery.data);
 
     const fileContext = useFileContext();
 
