@@ -6,7 +6,7 @@ import { createTime, generateTimeSlots, getSlotDiff, getTimeSlots, timeFormatKey
 import colors from '../../styles/colors.module.scss';
 import { extractLegSchedules } from '../../analyzer';
 import { getTextColor } from '../../utils/color';
-import { isLocalGlobalActivity, isLocalLegActivity } from '../scheduler/types';
+import { isLocalLegActivity } from '../scheduler/types';
 
 const timeColor = colors.time.replace('#', '');
 const programColor = colors.program.replace('#', '');
@@ -22,7 +22,8 @@ const timeFill: ExcelJS.Fill = {
 
 const centerAlignment: Partial<ExcelJS.Alignment> = {
     horizontal: 'center',
-    vertical: 'middle'
+    vertical: 'middle',
+    wrapText: true
 };
 
 const blackBorder: Partial<ExcelJS.Borders> = {
@@ -35,12 +36,6 @@ const blackBorder: Partial<ExcelJS.Borders> = {
 // time formats are the same for both types of schedules
 const timeHeader: Partial<ExcelJS.Column> = {
     width: 10
-};
-
-const timeCell: Partial<ExcelJS.Cell> = {
-    fill: timeFill,
-    alignment: centerAlignment,
-    border: blackBorder
 };
 
 // Master Schedule formats
@@ -242,7 +237,6 @@ async function fillLegSchedules(workbook: ExcelJS.Workbook, protos: ActivityProt
         // create time labels
         for(let i=0; i < timeSlots.length; ++i) {
             let time = timeSlots[i];
-            const timeKey = timeFormatKey(time);
             const timeLocal = timeFormatLocal(time);
             const row = i + 2;
             // Add time label
@@ -266,17 +260,24 @@ async function fillLegSchedules(workbook: ExcelJS.Workbook, protos: ActivityProt
             
             let slotdur = 0;
             let name = "";
-            let color = "";
+            let fill: ExcelJS.Fill | undefined = undefined;
+            let font: Partial<ExcelJS.Font> = {};
 
             if(isLocalLegActivity(act)) {
                 slotdur = protos[act.activityPrototypeId].duration*2;
-                name = protos[act.activityPrototypeId].name;
-                color = legActivityColor;
+                let otherLegs = act.leg.filter((l) => l !== legNumber);
+                name = `${protos[act.activityPrototypeId].name}${otherLegs.length > 0 ? ` w/ LEG ${otherLegs.join(" & ")}` : ""}`;
+                fill = legScheduleActivityFill;
             }
             else {
                 slotdur = act.duration*2;
                 name = act.name;
-                color = act.color.replace('#', '');
+                fill = {
+                    type: "pattern",
+                    pattern: "solid",
+                    fgColor: { argb: `FF${act.color.replace('#', '')}` }
+                };
+                font = { color: { argb: `FF${getTextColor(act.color).replace("#",'')}` } };
             }
 
             // Merge cells across all columns except time
@@ -284,13 +285,10 @@ async function fillLegSchedules(workbook: ExcelJS.Workbook, protos: ActivityProt
             const cell = worksheet.getCell(row, col);
             cell.value = name;
             cell.alignment = centerAlignment;
-            cell.fill = {
-                type: 'pattern',
-                pattern: 'solid',
-                fgColor: { argb: `FF${color}` }
-            };
-            cell.font = { color: { argb: `FF${getTextColor(color).replace("#",'')}` } }; // based on background color
+            cell.fill = fill;
+            cell.font = font;
             cell.border = blackBorder;
+            
         }
     }
 }
