@@ -164,11 +164,13 @@
                 }
                 height: $row-height;
                 margin: 2px 0px;
+                border-bottom: 1px solid gray;
+                
                 > * {
                     margin: 2px 5px;
                 }
 
-                border-bottom: 1px solid gray;
+                
             }
         }
     }
