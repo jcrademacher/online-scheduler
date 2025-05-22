@@ -50,6 +50,23 @@ export function getTimeSlots(schedule: Schedule, dayIndex: number) {
     return retval
 }
 
+export function generateTimeSlots(startDate: moment.Moment, endDate: moment.Moment) {
+    if(startDate.isAfter(endDate)) {
+        throw new Error("Start date is after end date");
+    }
+
+    let cur = startDate.clone();
+    let retval: moment.Moment[] = []
+
+    while(cur.diff(endDate) < 0) {
+        retval.push(cur.clone());
+        cur.add(30, 'minutes');
+    }
+
+    return retval;
+}
+    
+
 export function getSlotDiff(t1: moment.Moment, t2: moment.Moment) {
     return t1.diff(t2, 'hours', true) * 2;
 }

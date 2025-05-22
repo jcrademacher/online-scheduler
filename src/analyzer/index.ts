@@ -84,7 +84,7 @@ export async function analyzeSchedule(schedule: Schedule, acts: LocalIDMap<Local
 
 
 
-function extractLegSchedules(schedule: Schedule, acts: LocalIDMap<LocalLegActivity>, gacts: TimeMap<LocalGlobalActivity>): LegSchedule[] {
+export function extractLegSchedules(schedule: Schedule, acts: LocalIDMap<LocalLegActivity>, gacts: TimeMap<LocalGlobalActivity>): LegSchedule[] {
     const legSchedules = [];
     
     for(let legNumber = 1; legNumber <= (schedule.numLegs ?? 0); legNumber++) {

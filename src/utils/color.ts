@@ -30,10 +30,10 @@ function getLuminance(r: number, g: number, b: number): number {
  * Determines if white or black text should be used based on the background color
  * Returns 'white' for dark backgrounds and 'black' for light backgrounds
  */
-export function getTextColor(backgroundColor: string): 'white' | 'black' {
+export function getTextColor(backgroundColor: string): '#FFFFFF' | '#000000' {
     const rgb = hexToRgb(backgroundColor);
-    if (!rgb) return 'black'; // Default to black if color parsing fails
+    if (!rgb) return '#000000'; // Default to black if color parsing fails
     
     const luminance = getLuminance(rgb.r, rgb.g, rgb.b);
-    return luminance > 0.5 ? 'black' : 'white';
+    return luminance > 0.5 ? '#000000' : '#FFFFFF';
 } 

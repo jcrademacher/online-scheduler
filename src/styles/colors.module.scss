@@ -8,6 +8,8 @@ $time: #fcfcfc;
 $global: #194d33;
 $error: red;
 $warning: orange;
+$masterActivity: #cccccc;
+$legActivity: #ffffff;
 // $light: white;
 
 :export {
@@ -21,4 +23,6 @@ $warning: orange;
     global: $global;
     error: $error;
     warning: $warning;
+    masterActivity: $masterActivity;
+    legActivity: $legActivity;
 }

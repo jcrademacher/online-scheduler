@@ -2,38 +2,89 @@ import ExcelJS from 'exceljs';
 import { AllActivities } from '../../api/apiActivity';
 import { Schedule } from '../../api/apiSchedule';
 import { ActivityPrototype, ActivityPrototypeMap } from '../../api/apiActivityPrototype';
-import { createTime, getSlotDiff, getTimeSlots, timeFormatKey, timeFormatLocal } from '../../utils/time';
+import { createTime, generateTimeSlots, getSlotDiff, getTimeSlots, timeFormatKey, timeFormatLocal, dayOfCamp } from '../../utils/time';
 import colors from '../../styles/colors.module.scss';
+import { extractLegSchedules } from '../../analyzer';
+import { getTextColor } from '../../utils/color';
+import { isLocalGlobalActivity, isLocalLegActivity } from '../scheduler/types';
 
-export async function exportScheduleAsXLSX(protos: ActivityPrototypeMap, activities: AllActivities, schedule: Schedule) {
-    // Create a new workbook
-    const workbook = new ExcelJS.Workbook();
+const timeColor = colors.time.replace('#', '');
+const programColor = colors.program.replace('#', '');
+const elementColor = colors.element.replace('#', '');
+const masterActivityColor = colors.masterActivity.replace('#', '');
+const legActivityColor = colors.legActivity.replace('#', '');
 
-    const timeColor = colors.time.replace('#', '');
-    const programColor = colors.program.replace('#', '');
-    const elementColor = colors.element.replace('#', '');
+const timeFill: ExcelJS.Fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: `FF${timeColor}` } // Light gray
+};
+
+const centerAlignment: Partial<ExcelJS.Alignment> = {
+    horizontal: 'center',
+    vertical: 'middle'
+};
+
+const blackBorder: Partial<ExcelJS.Borders> = {
+    top: { style: 'thin', color: { argb: 'FF000000' } },
+    bottom: { style: 'thin', color: { argb: 'FF000000' } },
+    left: { style: 'thin', color: { argb: 'FF000000' } },
+    right: { style: 'thin', color: { argb: 'FF000000' } }
+};
+
+// time formats are the same for both types of schedules
+const timeHeader: Partial<ExcelJS.Column> = {
+    width: 10
+};
+
+const timeCell: Partial<ExcelJS.Cell> = {
+    fill: timeFill,
+    alignment: centerAlignment,
+    border: blackBorder
+};
+
+// Master Schedule formats
+const mainHeader: Partial<ExcelJS.Column> = {
+    width: 20
+};
+
+const masterScheduleProgramHeaderFill: ExcelJS.Fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: `FF${programColor}` } 
+};
+
+const masterScheduleElementHeaderFill: ExcelJS.Fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: `FF${elementColor}` } 
+};
+
+const masterScheduleActivityFill: ExcelJS.Fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: `FF${masterActivityColor}` }
+};
+
+const legScheduleHeaderFill: ExcelJS.Fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: `FF${timeColor}` } 
+};
+
+// leg schedule formats
+const legScheduleActivityFill: ExcelJS.Fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: `FF${legActivityColor}` } 
+};
+
+async function fillMasterSchedule(workbook: ExcelJS.Workbook, protos: ActivityPrototypeMap, activities: AllActivities, schedule: Schedule) {
+    
     let numDays = schedule.startDates.length;
 
     // Sort activity prototypes alphabetically
     const sortFn = (a: ActivityPrototype, b: ActivityPrototype) => a.name.localeCompare(b.name);
-
-    const timeFill: ExcelJS.Fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: `FF${timeColor}` } // Light gray
-    };
-
-    const programFill: ExcelJS.Fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: `FF${programColor}` } // Light gray
-    };
-
-    const elementFill: ExcelJS.Fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: `FF${elementColor}` } // Light gray
-    };
 
 
     const sortedElms = Object.values(protos).filter((p) => p.type == 'element').sort(sortFn);
@@ -50,16 +101,12 @@ export async function exportScheduleAsXLSX(protos: ActivityPrototypeMap, activit
 
         // Set up columns
         worksheet.columns = [
-            { header: 'Time', width: 15,
-                fill: timeFill
-             }, // Time column
+            { header: 'Time', ...timeHeader }, // Time column
             ...sortedPrototypes.map(prototype => ({
                 header: prototype.name,
-                width: 20
+                ...mainHeader,
             }))
         ];
-
-
 
         // Style headers
         worksheet.getRow(1).eachCell((cell, colNumber) => {
@@ -67,9 +114,10 @@ export async function exportScheduleAsXLSX(protos: ActivityPrototypeMap, activit
                 cell.fill = timeFill;
             } else {
                 const prototype = sortedPrototypes[colNumber - 2];
-                cell.fill = prototype.type === 'element' ? elementFill : programFill;
+                cell.fill = prototype.type === 'element' ? masterScheduleElementHeaderFill : masterScheduleProgramHeaderFill;
             }
-            cell.alignment = { horizontal: 'center' };
+            cell.alignment = centerAlignment;
+            cell.border = blackBorder;
         });
 
         // first add time labels and global activities
@@ -80,8 +128,9 @@ export async function exportScheduleAsXLSX(protos: ActivityPrototypeMap, activit
             // Add time label
             const timeCell = worksheet.getCell(row, 1);
             timeCell.value = timeFormatLocal(time);
-            timeCell.alignment = { horizontal: 'center' };
+            timeCell.alignment = centerAlignment;
             timeCell.fill = timeFill;
+            timeCell.border = blackBorder;
 
             if (timeKey in activities.globalActs) {
                 let globalActivity = activities.globalActs[timeKey];
@@ -93,13 +142,14 @@ export async function exportScheduleAsXLSX(protos: ActivityPrototypeMap, activit
                 
                 const cell = worksheet.getCell(row, 2);
                 cell.value = globalActivity.name;
-                cell.alignment = { horizontal: 'center', vertical: 'middle' };
+                cell.alignment = centerAlignment;
                 cell.fill = {
                     type: 'pattern',
                     pattern: 'solid',
-                    fgColor: { argb: 'FFD3D3D3' } // Blue
+                    fgColor: { argb: `FF${globalActivity.color.replace('#', '')}` }
                 };
-                cell.font = { color: { argb: 'FFFFFFFF' } }; // White text
+                cell.font = { color: { argb: `FF${getTextColor(globalActivity.color).replace("#",'')}` } }; // based on background color
+                cell.border = blackBorder;
             } 
         }
 
@@ -128,15 +178,129 @@ export async function exportScheduleAsXLSX(protos: ActivityPrototypeMap, activit
                 worksheet.mergeCells(row, col, row + slotdur - 1, col);
                 const cell = worksheet.getCell(row, col);
                 cell.value = act.leg.join(" & ");
-                cell.alignment = { horizontal: 'center', vertical: 'middle' };
-                cell.fill = {
-                    type: 'pattern',
-                    pattern: 'solid',
-                    fgColor: { argb: 'FFD3D3D3' } // Gray
-                };          
+                cell.alignment = centerAlignment;
+                cell.fill = masterScheduleActivityFill;
+                cell.border = blackBorder;
             }
         }
     }
+}
+
+async function fillLegSchedules(workbook: ExcelJS.Workbook, protos: ActivityPrototypeMap, activities: AllActivities, schedule: Schedule) {
+    const legSchedules = extractLegSchedules(schedule, activities.acts, activities.globalActs);
+
+    const numDays = schedule.startDates.length;
+
+    console.log(legSchedules);
+
+    // const flattenedActivities: { [key: string]: LocalActivity } = {};
+    
+    // Object.values(activities.acts).forEach((actsInProtoObj) => 
+    //     Object.values(actsInProtoObj).forEach((act) => flattenedActivities[act.startTime] = act));
+
+    // console.log(flattenedActivities);
+
+    const earliestStart = schedule.startDates.reduce((earliestTime, timeStr) => {
+        const curTime = createTime(timeStr);
+        return curTime.isBefore(earliestTime) ? curTime : earliestTime;
+    }, createTime(schedule.startDates[0]));
+
+    const latestEnd = schedule.endDates.reduce((latestTime, timeStr) => {
+        const cur = createTime(timeStr);
+        return cur.isAfter(latestTime) ? cur : latestTime;
+    }, createTime(schedule.endDates[0]));
+
+    // normalize to earliest start date (same day), but maintain time
+    latestEnd.year(earliestStart.year()).month(earliestStart.month()).date(earliestStart.date());
+
+    const timeSlots = generateTimeSlots(earliestStart, latestEnd);
+    
+    for(let legIndex = 0; legIndex < legSchedules.length; ++legIndex) {
+        const legSchedule = legSchedules[legIndex];
+        const legNumber = legIndex + 1;
+
+        const worksheet = workbook.addWorksheet(`Leg ${legNumber}`);
+        worksheet.columns = [{
+            header: "Time",
+            ...timeHeader
+        }, ...Array(numDays).fill(null).map((_, dayIndex) => ({
+            header: `Day ${dayIndex + 1}`,
+            ...mainHeader
+        }))];   
+
+
+        // Style headers
+        worksheet.getRow(1).eachCell((cell, colNumber) => {
+            if (colNumber === 1) {
+                cell.fill = timeFill;
+            } else {
+                cell.fill = legScheduleHeaderFill;
+            }
+            cell.alignment = centerAlignment;
+            cell.border = blackBorder;
+        });
+        // create time labels
+        for(let i=0; i < timeSlots.length; ++i) {
+            let time = timeSlots[i];
+            const timeKey = timeFormatKey(time);
+            const timeLocal = timeFormatLocal(time);
+            const row = i + 2;
+            // Add time label
+            const timeCell = worksheet.getCell(row, 1);
+            timeCell.value = timeLocal;
+            timeCell.alignment = centerAlignment;
+            timeCell.fill = timeFill;
+            timeCell.border = blackBorder;
+        }
+
+        for(let actIndex = 0; actIndex < legSchedule.length; ++actIndex) {
+            const act = legSchedule[actIndex];
+            const time = createTime(act.startTime);
+
+            const dayIndex = dayOfCamp(time, schedule)-1;
+            let dayStart = earliestStart.clone();
+            dayStart.add(dayIndex, 'day');
+            
+            const col = dayIndex + 2;
+            const row = getSlotDiff(time, dayStart) + 2;
+            
+            let slotdur = 0;
+            let name = "";
+            let color = "";
+
+            if(isLocalLegActivity(act)) {
+                slotdur = protos[act.activityPrototypeId].duration*2;
+                name = protos[act.activityPrototypeId].name;
+                color = legActivityColor;
+            }
+            else {
+                slotdur = act.duration*2;
+                name = act.name;
+                color = act.color.replace('#', '');
+            }
+
+            // Merge cells across all columns except time
+            worksheet.mergeCells(row, col, row + slotdur - 1, col);
+            const cell = worksheet.getCell(row, col);
+            cell.value = name;
+            cell.alignment = centerAlignment;
+            cell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: `FF${color}` }
+            };
+            cell.font = { color: { argb: `FF${getTextColor(color).replace("#",'')}` } }; // based on background color
+            cell.border = blackBorder;
+        }
+    }
+}
+
+export async function exportScheduleAsXLSX(protos: ActivityPrototypeMap, activities: AllActivities, schedule: Schedule) {
+    // Create a new workbook
+    const workbook = new ExcelJS.Workbook();
+
+    await fillMasterSchedule(workbook, protos, activities, schedule);
+    await fillLegSchedules(workbook, protos, activities, schedule);
 
     // Generate buffer
     const buffer = await workbook.xlsx.writeBuffer();
