@@ -281,7 +281,12 @@ async function fillLegSchedules(workbook: ExcelJS.Workbook, protos: ActivityProt
             }
 
             // Merge cells across all columns except time
-            worksheet.mergeCells(row, col, row + slotdur - 1, col);
+            try {
+                worksheet.mergeCells(row, col, row + slotdur - 1, col);
+            }
+            catch(e) {
+                console.log(e);
+            }
             const cell = worksheet.getCell(row, col);
             cell.value = name;
             cell.alignment = centerAlignment;
