@@ -4,6 +4,7 @@ import { LocalIDMap, ScheduleObject, TimeMap } from "../components/scheduler/typ
 import { ActivityPrototypeMap, ActivityPrototype } from "./apiActivityPrototype.tsx";
 
 import moment from "moment";
+import { createTime } from "../utils/time.tsx";
 
 export type LegActivity = Schema["LegActivity"]["type"];
 export type LocalLegActivity = Schema["LegActivity"]['createType'];
@@ -17,7 +18,13 @@ export type AllActivities = {
 }
 
 export async function getActivities(proto: ActivityPrototype): Promise<LocalLegActivity[]> {
-    const retval = await proto.activities();
+    const retval = await client.models.LegActivity.list({
+        filter: {
+            activityPrototypeId: {
+                eq: proto.id
+            }
+        }
+    });
 
     if(!retval.errors && retval.data) {
         return retval.data;
@@ -49,7 +56,7 @@ export async function getActivitiesMapped(protos: ActivityPrototypeMap): Promise
 
             retval[actId] = {
                 ...retval[actId],
-                [moment(acts[i].startTime).toISOString()]: acts[i]
+                [createTime(acts[i].startTime).toISOString()]: acts[i]
             }
         }
     }

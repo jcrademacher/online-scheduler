@@ -49,8 +49,7 @@ const schema = a.schema({
             analyses: a.ref("Analyses")
         })
         .authorization((allow) => [
-            allow.authenticated().to(['create', 'read']),
-            allow.owner().to(['create', 'read', 'update'])
+            allow.authenticated()
         ]),
 
     LegActivity: a
