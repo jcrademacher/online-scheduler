@@ -118,7 +118,7 @@ export async function saveActivities(oldActs: LocalIDMap<LocalLegActivity>| unde
                 retval = await client.models.LegActivity.delete({
                     id: id
                 });
-                console.log('deleted: ',retval.data);
+                console.log('deleted: ',retval);
             }
             else {
                 throw new Error("Old IDs contains an element that is undefined. This should not happen.");
@@ -148,7 +148,7 @@ export async function saveActivities(oldActs: LocalIDMap<LocalLegActivity>| unde
                 retval = await client.models.GlobalActivity.delete({
                     id: id
                 });
-                console.log('deleted: ',retval.data);
+                console.log('deleted: ',retval);
             }
             else {
                 throw new Error("Old IDs contains an element that is undefined. This should not happen.");
@@ -177,12 +177,12 @@ export async function saveActivities(oldActs: LocalIDMap<LocalLegActivity>| unde
             if(act.id) {
                 retval = await client.models.LegActivity.update({ ...act, id: act.id});
 
-                console.log('updated: ',retval.data);
+                console.log('updated: ',retval);
             }
             else {
                 retval = await client.models.LegActivity.create(act);
 
-                console.log('created: ',retval.data);
+                console.log('created: ',retval);
             }
 
             checkErrors(retval?.errors);
@@ -202,11 +202,11 @@ export async function saveActivities(oldActs: LocalIDMap<LocalLegActivity>| unde
 
         if(gact.id) {
             retval = await client.models.GlobalActivity.update({ ...gact, id: gact.id });
-            console.log('updated: ',retval.data);
+            console.log('updated: ',retval);
         }
         else {
             retval = await client.models.GlobalActivity.create(gact);
-            console.log('created: ',retval.data);
+            console.log('created: ',retval);
         }
 
         checkErrors(retval?.errors);
