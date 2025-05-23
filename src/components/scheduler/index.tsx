@@ -78,8 +78,8 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
     useEffect(() => {
         if (actsQuery.data) {
             setLocalSch({
-                globalActs: { ...localSch.globalActs, ...actsQuery.data.globalActs },
-                acts: { ...localSch.acts, ...actsQuery.data.acts }
+                globalActs: actsQuery.data.globalActs,
+                acts: actsQuery.data.acts
             });
             console.log("Local sch set: ", actsQuery.data);
         }
@@ -121,10 +121,11 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
     const saveSchMutation = useMutation({
         mutationKey: ['saveSchedule', scheduleId],
         mutationFn: async () => saveActivities(actsQuery.data?.acts, actsQuery.data?.globalActs, localSch.acts, localSch.globalActs),
-        onSuccess: () => {
-            console.log("Success, invalidating");
+        onSuccess: (data) => {
+            console.log("Success, setting query data");
+            queryClient.setQueryData(['allActivities', scheduleId], data);
+            console.log("invalidating");
             queryClient.invalidateQueries({ queryKey: ["allActivities", scheduleId] });
-            
         },
         onError: (error) => {
             emitToast(`Error saving schedule: ${error.message}`, ToastType.Error);

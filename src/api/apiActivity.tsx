@@ -173,12 +173,12 @@ export async function saveActivities(oldActs: LocalIDMap<LocalLegActivity>| unde
             if(act.id) {
                 retval = await client.models.LegActivity.update({ ...act, id: act.id});
 
-                console.log('creating: ',retval.data);
+                console.log('updating: ',retval.data);
             }
             else {
                 retval = await client.models.LegActivity.create(act);
 
-                console.log('updating: ',retval.data);
+                console.log('creating: ',retval.data);
             }
 
             checkErrors(retval?.errors);
