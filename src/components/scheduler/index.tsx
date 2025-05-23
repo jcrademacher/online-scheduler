@@ -120,9 +120,9 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
     const saveSchMutation = useMutation({
         mutationKey: ['saveSchedule', scheduleId],
         mutationFn: async () => saveActivities(actsQuery.data?.acts, actsQuery.data?.globalActs, localSch.acts, localSch.globalActs),
-        onSuccess: (newData: ScheduleObject) => {
-            console.log("Success");   
-            queryClient.setQueryData(['allActivities', scheduleId], newData);
+        onSuccess: () => {
+            console.log("Success");
+            queryClient.invalidateQueries({ queryKey: ["allActivities", scheduleId] });
         },
         onError: (error) => {
             emitToast(`Error saving schedule: ${error.message}`, ToastType.Error);
