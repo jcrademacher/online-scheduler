@@ -1,6 +1,6 @@
 import { View } from '../../pages/scheduling-page'
 import '../../styles/scheduler.scss'
-import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from 'react';
 import moment from 'moment';
 import { checkActivityCreate, checkGlobalActivityCreate, ScheduledGlobalActivity } from './activities';
 
@@ -28,7 +28,7 @@ import { useActivityPrototypesQuery, useScheduleQuery, useAllActivitiesQuery } f
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useScheduleIDMatch } from '../../utils/router';
 import { createTime } from '../../utils/time';
-import { SchedulerRef } from '../file/context-provider.js';
+import { SchedulerRef, useFileContext } from '../file/context-provider.js';
 
 
 import { emitToast, ToastType } from '../notifications';
@@ -57,7 +57,7 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
     // const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
 
     // context
-    // const fileContext = useFileContext();
+    const fileContext = useFileContext();
 
     
     const activityPrototypes = actProtoQuery.data ? actProtoQuery.data : {};
@@ -86,6 +86,8 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
         }
     }, [actsQuery.data]);
 
+    
+
     const saveSchMutation = useMutation({
         mutationKey: ['saveSchedule', scheduleId],
         mutationFn: async () => {
@@ -111,6 +113,12 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
             // console.log("Mutation starting with currentState:", currentState);
         }
     });
+
+    // autosave fired on specific handlers
+    const updateStateAndSave = useCallback((sch: ScheduleObject) => {
+        setLocalSch(sch);
+        fileContext.saveSchedule();
+    }, [localSch]);
 
     useImperativeHandle(ref, () => {
         return {
@@ -200,7 +208,7 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
             }
 
             // console.log("newSch", newSch);
-            setLocalSch(newSch);
+            updateStateAndSave(newSch);
         }
     }
 
@@ -216,7 +224,7 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
         if (canCreate) {
             addActivity(newAct, newGacts);
 
-            setLocalSch({ ...localSch, globalActs: newGacts });
+            updateStateAndSave({ ...localSch, globalActs: newGacts });
         }
     }
 
@@ -282,13 +290,13 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
         // newGacts[newGact.startTime] = newGact;
         addActivity(newGact, gacts);
         // console.log(newGact);
-        setLocalSch({ ...localSch, globalActs: gacts });
+        updateStateAndSave({ ...localSch, globalActs: gacts });
     }
 
     const handleDeleteGlobalActivity = (newGact: LocalGlobalActivity) => {
         const gacts = { ...localSch.globalActs };
         removeActivity(newGact, gacts)
-        setLocalSch({ ...localSch, globalActs: gacts });
+        updateStateAndSave({ ...localSch, globalActs: gacts });
 
         // if (newGact.id) {
         //     setDeletedGactIDs([...deletedGactIDs, newGact.id]);
@@ -310,7 +318,7 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
             } 
         };     
         // console.log("Setting new state in saveActivity:", JSON.stringify(newSch, null, 2));
-        setLocalSch(newSch);
+        updateStateAndSave(newSch);
     }
 
     const handleDeleteActivity = (newAct: LocalLegActivity) => {
@@ -328,7 +336,7 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
             } 
         };
         // console.log("Setting new state after delete:", JSON.stringify(newSch, null, 2));
-        setLocalSch(newSch);
+        updateStateAndSave(newSch);
     }
 
     const renderGlobalActivities: () => JSX.Element[] = () => {
