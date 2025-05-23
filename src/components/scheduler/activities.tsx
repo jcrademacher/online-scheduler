@@ -39,11 +39,8 @@ export function addActivity<T extends LocalActivity>(newAct: T, object: TimeMap<
 }
 
 export function removeActivity<T extends LocalActivity>(act: T, object: TimeMap<T>) {
+    // console.log("removing activity: ", act);
     delete object[act.startTime];
-}
-
-export function updateActivity<T extends LocalActivity>(newAct: T, object: TimeMap<T>) {
-    object[newAct.startTime] = newAct;
 }
 
 const checkTimeDurationInObject: (startTime: moment.Moment, duration: number, object: TimeMap<LocalLegActivity> | TimeMap<LocalGlobalActivity>) => boolean = (startTime, duration, object) => {
