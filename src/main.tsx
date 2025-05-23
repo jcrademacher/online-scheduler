@@ -17,7 +17,7 @@ const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
             networkMode: 'online', // or 'offlineFirst' or 'always'
-            gcTime: 1000 * 60 * 60 * 24, // 24 hours
+            gcTime: 1000 * 60 * 60, // 24 hours
         },
     },
     queryCache: new QueryCache({

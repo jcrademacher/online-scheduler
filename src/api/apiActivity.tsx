@@ -109,7 +109,7 @@ export async function saveActivities(oldActs: LocalIDMap<LocalLegActivity>| unde
 
         // console.log('old IDs: ', oldIDs);
         // console.log('new IDs: ', newIDs);
-        // console.log('acts diff: ', diff);
+        console.log('acts diff: ', diff);
 
         for(const act of diff) {
 
@@ -138,7 +138,7 @@ export async function saveActivities(oldActs: LocalIDMap<LocalLegActivity>| unde
 
         // console.log('old IDs: ', oldIDs);
         // console.log('new IDs: ', newIDs);
-        // console.log('gacts diff: ', diff);
+        console.log('gacts diff: ', diff);
 
         for(const gact of diff) {
             let id = gact.id;

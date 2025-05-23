@@ -81,7 +81,7 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
                 globalActs: { ...localSch.globalActs, ...actsQuery.data.globalActs },
                 acts: { ...localSch.acts, ...actsQuery.data.acts }
             });
-            console.log("Local sch set");
+            console.log("Local sch set: ", actsQuery.data);
         }
     }, [actsQuery.data]);
 
@@ -124,6 +124,7 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
         onSuccess: () => {
             console.log("Success, invalidating");
             queryClient.invalidateQueries({ queryKey: ["allActivities", scheduleId] });
+            
         },
         onError: (error) => {
             emitToast(`Error saving schedule: ${error.message}`, ToastType.Error);
