@@ -35,18 +35,18 @@ export function FileContextProvider({children}: {children: ReactNode}) {
     const schedulerRef = useRef<SchedulerRef>(null);
 
     const handleSave: () => Promise<ScheduleObject> = async () => {
-        // console.log("updated handleSave");
+        console.log("FileContextProvider handleSave called");
         var data = { acts: {}, globalActs: {} };
         if (schedulerRef.current) {
             setSaving(true);
+            console.log("Calling schedulerRef.current.save()");
             data = await schedulerRef.current.save();
+            console.log("Save completed with data:", data);
             setSaving(false);
             setSavedAt(createTime());
-            // return data;
         }
         else {
             emitToast("No scheduler ref found", ToastType.Error);
-            // return { acts: {}, globalActs: {} };
         }
 
         return data; 

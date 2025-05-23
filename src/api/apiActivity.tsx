@@ -91,8 +91,8 @@ export async function getGlobalActivitiesMapped(scheduleId: string): Promise<Tim
 export async function saveActivities(oldActs: LocalIDMap<LocalLegActivity>| undefined, oldGacts: TimeMap<LocalGlobalActivity> | undefined, acts: LocalIDMap<LocalLegActivity>, gacts: TimeMap<LocalGlobalActivity>): Promise<ScheduleObject> {
     var retval;
 
-    let updatedActs: LocalIDMap<LocalLegActivity> = acts;
-    let updatedGacts: TimeMap<LocalGlobalActivity> = gacts;
+    let updatedActs: LocalIDMap<LocalLegActivity> = JSON.parse(JSON.stringify(acts));
+    let updatedGacts: TimeMap<LocalGlobalActivity> = JSON.parse(JSON.stringify(gacts));
 
     // console.log("old acts", oldActs);
     // console.log("acts", acts);
@@ -103,7 +103,7 @@ export async function saveActivities(oldActs: LocalIDMap<LocalLegActivity>| unde
         // console.log( Object.values(oldActs));
         let newActsFlat = Object.values(acts).map((el) => Object.values(el)).reduce((acc,val) => acc.concat(val), []);
 
-        console.log("newActsFlattened", newActsFlat);
+        // console.log("newActsFlattened", newActsFlat);
 
         let diff = oldActsFlat.filter((a) => newActsFlat.findIndex((b) => a.id === b.id) < 0);
 
@@ -118,6 +118,7 @@ export async function saveActivities(oldActs: LocalIDMap<LocalLegActivity>| unde
                 retval = await client.models.LegActivity.delete({
                     id: id
                 });
+                console.log('deleted: ',retval.data);
             }
             else {
                 throw new Error("Old IDs contains an element that is undefined. This should not happen.");
@@ -147,6 +148,7 @@ export async function saveActivities(oldActs: LocalIDMap<LocalLegActivity>| unde
                 retval = await client.models.GlobalActivity.delete({
                     id: id
                 });
+                console.log('deleted: ',retval.data);
             }
             else {
                 throw new Error("Old IDs contains an element that is undefined. This should not happen.");
@@ -157,14 +159,16 @@ export async function saveActivities(oldActs: LocalIDMap<LocalLegActivity>| unde
             delete updatedGacts[gact.startTime];
         }
     }
-
+    // console.log("acts: ", acts);
     // then update or create new activities
     for(const proto in acts) {
         for(const time in acts[proto]) {
             let act = acts[proto][time];
 
-            // compare to see if act has changed, no need to update if not
+            // // compare to see if act has changed, no need to update if not
             if(oldActs && oldActs[proto] && JSON.stringify(oldActs[proto][time]) === JSON.stringify(act)) {
+                // console.log("old: ", JSON.stringify(oldActs[proto][time]));
+                // console.log("new: ", JSON.stringify(act));
                 continue;
             }
 
@@ -173,12 +177,12 @@ export async function saveActivities(oldActs: LocalIDMap<LocalLegActivity>| unde
             if(act.id) {
                 retval = await client.models.LegActivity.update({ ...act, id: act.id});
 
-                console.log('updating: ',retval.data);
+                console.log('updated: ',retval.data);
             }
             else {
                 retval = await client.models.LegActivity.create(act);
 
-                console.log('creating: ',retval.data);
+                console.log('created: ',retval.data);
             }
 
             checkErrors(retval?.errors);
@@ -191,16 +195,18 @@ export async function saveActivities(oldActs: LocalIDMap<LocalLegActivity>| unde
     for(const time in gacts) {
         let gact = gacts[time];
 
-        // compare to see if act has changed, no need to update if not
+        // // compare to see if act has changed, no need to update if not
         if(oldGacts && JSON.stringify(oldGacts[time]) === JSON.stringify(gact)) {
             continue;
         }
 
         if(gact.id) {
             retval = await client.models.GlobalActivity.update({ ...gact, id: gact.id });
+            console.log('updated: ',retval.data);
         }
         else {
             retval = await client.models.GlobalActivity.create(gact);
+            console.log('created: ',retval.data);
         }
 
         checkErrors(retval?.errors);

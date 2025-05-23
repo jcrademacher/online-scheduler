@@ -13,7 +13,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend'
 
 // const times = range(700,2030,30);
 import colors from '../../styles/colors.module.scss';
-import { ScheduledActivity, Workarea, addActivity, removeActivity, updateActivity } from './activities';
+import { ScheduledActivity, Workarea, addActivity, removeActivity } from './activities';
 
 import {
     GlobalActivityDragStatus,
@@ -77,6 +77,7 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
 
     useEffect(() => {
         if (actsQuery.data) {
+            console.log("Setting localSch from actsQuery:", actsQuery.data);
             setLocalSch({
                 globalActs: actsQuery.data.globalActs,
                 acts: actsQuery.data.acts
@@ -85,6 +86,40 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
         }
     }, [actsQuery.data]);
 
+    const saveSchMutation = useMutation({
+        mutationKey: ['saveSchedule', scheduleId],
+        mutationFn: async () => {
+            const currentState = JSON.parse(JSON.stringify(state));
+            console.log("mutationFn called with currentState:", currentState);
+            return saveActivities(
+                actsQuery.data?.acts,
+                actsQuery.data?.globalActs,
+                currentState.acts,
+                currentState.globalActs
+            );
+        },
+        onSuccess: (data) => {
+            console.log("Mutation success, data:", data);
+            queryClient.setQueryData(['allActivities', scheduleId], data);
+        },
+        onError: (error) => {
+            console.error("Mutation error:", error);
+            emitToast(`Error saving schedule: ${error.message}`, ToastType.Error);
+        },
+        onMutate: () => {
+            // const currentState = state;
+            // console.log("Mutation starting with currentState:", currentState);
+        }
+    });
+
+    useImperativeHandle(ref, () => {
+        return {
+            save: async () => {
+                const data = await saveSchMutation.mutateAsync();
+                return data;
+            }
+        };
+    }, [state, saveSchMutation]);
 
     const handleUndo = (evt: KeyboardEvent) => {
         evt.stopImmediatePropagation();
@@ -117,32 +152,6 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
 
     let thisDayStart = createTime(schedule?.startDates[dayView - 1]);
     let thisDayEnd = createTime(schedule?.endDates[dayView - 1]);
-
-    const saveSchMutation = useMutation({
-        mutationKey: ['saveSchedule', scheduleId],
-        mutationFn: async () => saveActivities(actsQuery.data?.acts, actsQuery.data?.globalActs, localSch.acts, localSch.globalActs),
-        onSuccess: (data) => {
-            console.log("Success, setting query data");
-            queryClient.setQueryData(['allActivities', scheduleId], data);
-            console.log("invalidating");
-        },
-        onError: (error) => {
-            emitToast(`Error saving schedule: ${error.message}`, ToastType.Error);
-        },
-        onMutate: () => {
-            console.log("Saving...");
-        }
-    });
-
-    useImperativeHandle(ref, () => {
-        return {
-            save: async () => {
-                const data = await saveSchMutation.mutateAsync();
-                console.log("Returned from imperative handle:", data);
-                return data;
-            }
-        };
-    });
 
     const handleMoveActivity = (newId: string, newTime: moment.Moment, oldAct: LocalLegActivity) => {
         let newActs = localSch.acts[newId] ? { ...localSch.acts[newId] } : {};
@@ -232,8 +241,11 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
 
         if (canCreate) {
             // acts.splice(insertAt, 0, newAct);
+            
             addActivity(newAct, acts);
-            setLocalSch({ ...localSch, acts: { ...localSch.acts, [id]: acts } });
+            const newSch = { ...localSch, acts: { ...localSch.acts, [id]: acts } };
+            console.log("adding activity: ", newSch);
+            setLocalSch(newSch);
         }
     }
 
@@ -268,7 +280,7 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
     const handleSaveGlobalActivity = (newGact: LocalGlobalActivity) => {
         const gacts = { ...localSch.globalActs };
         // newGacts[newGact.startTime] = newGact;
-        updateActivity(newGact, gacts);
+        addActivity(newGact, gacts);
         // console.log(newGact);
         setLocalSch({ ...localSch, globalActs: gacts });
     }
@@ -284,25 +296,39 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
     }
 
     const handleSaveActivity = (newAct: LocalLegActivity) => {
+        console.log("handleSaveActivity called with:", newAct);
         let id = newAct.activityPrototypeId;
         let acts = { ...localSch.acts[id] };
-
-        updateActivity(newAct, acts);
-        setLocalSch({ ...localSch, acts: { ...localSch.acts, [id]: acts } });
-        // acts[index] = newAct;
-        // setLocalSchActs({ ...localSchActs, [id]: acts });
+        
+        acts[newAct.startTime] = newAct;
+        
+        const newSch = { 
+            ...localSch, 
+            acts: { 
+                ...localSch.acts, 
+                [id]: acts 
+            } 
+        };     
+        // console.log("Setting new state in saveActivity:", JSON.stringify(newSch, null, 2));
+        setLocalSch(newSch);
     }
 
     const handleDeleteActivity = (newAct: LocalLegActivity) => {
+        console.log("handleDeleteActivity called with:", newAct);
         let id = newAct.activityPrototypeId;
         let acts = { ...localSch.acts[id] };
-
+        
         removeActivity(newAct, acts);
-        setLocalSch({ ...localSch, acts: { ...localSch.acts, [id]: acts } });
-
-        // if (newAct.id) {
-        //     setDeletedActIDs([...deletedActIDs, newAct.id]);
-        // }
+        
+        const newSch = { 
+            ...localSch, 
+            acts: { 
+                ...localSch.acts, 
+                [id]: acts 
+            } 
+        };
+        // console.log("Setting new state after delete:", JSON.stringify(newSch, null, 2));
+        setLocalSch(newSch);
     }
 
     const renderGlobalActivities: () => JSX.Element[] = () => {
