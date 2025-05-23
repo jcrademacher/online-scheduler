@@ -103,6 +103,8 @@ export async function saveActivities(oldActs: LocalIDMap<LocalLegActivity>| unde
         // console.log( Object.values(oldActs));
         let newActsFlat = Object.values(acts).map((el) => Object.values(el)).reduce((acc,val) => acc.concat(val), []);
 
+        console.log("newActsFlattened", newActsFlat);
+
         let diff = oldActsFlat.filter((a) => newActsFlat.findIndex((b) => a.id === b.id) < 0);
 
         // console.log('old IDs: ', oldIDs);

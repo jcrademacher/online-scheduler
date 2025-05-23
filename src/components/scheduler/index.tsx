@@ -78,9 +78,10 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
     useEffect(() => {
         if (actsQuery.data) {
             setLocalSch({
-                globalActs: actsQuery.data.globalActs,
-                acts: actsQuery.data.acts
+                globalActs: { ...localSch.globalActs, ...actsQuery.data.globalActs },
+                acts: { ...localSch.acts, ...actsQuery.data.acts }
             });
+            console.log("Local sch set");
         }
     }, [actsQuery.data]);
 
@@ -121,7 +122,7 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
         mutationKey: ['saveSchedule', scheduleId],
         mutationFn: async () => saveActivities(actsQuery.data?.acts, actsQuery.data?.globalActs, localSch.acts, localSch.globalActs),
         onSuccess: () => {
-            console.log("Success");
+            console.log("Success, invalidating");
             queryClient.invalidateQueries({ queryKey: ["allActivities", scheduleId] });
         },
         onError: (error) => {
@@ -136,6 +137,7 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
         return {
             save: async () => {
                 const data = await saveSchMutation.mutateAsync();
+                console.log("Returned from imperative handle:", data);
                 return data;
             }
         };
