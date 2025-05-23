@@ -125,7 +125,6 @@ export const Scheduler = forwardRef<SchedulerRef, SchedulerProps>((props,ref) =>
             console.log("Success, setting query data");
             queryClient.setQueryData(['allActivities', scheduleId], data);
             console.log("invalidating");
-            queryClient.invalidateQueries({ queryKey: ["allActivities", scheduleId] });
         },
         onError: (error) => {
             emitToast(`Error saving schedule: ${error.message}`, ToastType.Error);
