@@ -3,7 +3,6 @@ import { checkErrors, client } from './index.tsx';
 import { LocalIDMap, ScheduleObject, TimeMap } from "../components/scheduler/types";
 import { ActivityPrototypeMap, ActivityPrototype } from "./apiActivityPrototype.tsx";
 
-import moment from "moment";
 import { createTime } from "../utils/time.tsx";
 
 export type LegActivity = Schema["LegActivity"]["type"];
