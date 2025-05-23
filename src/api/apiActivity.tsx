@@ -26,6 +26,7 @@ export async function getActivities(proto: ActivityPrototype): Promise<LocalLegA
     });
 
     if(!retval.errors && retval.data) {
+        console.log(`getActivities result for ${proto.name} (${proto.id}):`, retval);
         return retval.data;
     }
     else {
@@ -51,10 +52,10 @@ export async function getActivitiesMapped(protos: ActivityPrototypeMap): Promise
         const acts = await getActivities(protos[proto]);
         
         for(let i=0; i<acts.length; i++) {
-            let actId = acts[i].activityPrototypeId;
+            let protoId = acts[i].activityPrototypeId;
 
-            retval[actId] = {
-                ...retval[actId],
+            retval[protoId] = {
+                ...retval[protoId],
                 [createTime(acts[i].startTime).toISOString()]: acts[i]
             }
         }
