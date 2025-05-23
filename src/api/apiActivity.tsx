@@ -17,22 +17,35 @@ export type AllActivities = {
 }
 
 export async function getActivities(proto: ActivityPrototype): Promise<LocalLegActivity[]> {
-    const retval = await client.models.LegActivity.list({
-        filter: {
-            activityPrototypeId: {
-                eq: proto.id
-            }
-        }
-    });
+    let nextToken: string | null = null;
 
-    if(!retval.errors && retval.data) {
-        console.log(`getActivities result for ${proto.name} (${proto.id}):`, retval);
-        return retval.data;
-    }
-    else {
-        console.log(retval.errors);
-        throw new Error(retval.errors?.map((el) => el.message).join(','));
-    }
+    var retval;
+    var actsArray: LocalLegActivity[] = [];
+
+    // have to do this beacuse list method paginates
+    do {
+        retval = await client.models.LegActivity.list({
+            filter: {
+                activityPrototypeId: {
+                    eq: proto.id
+                }
+            }, 
+            nextToken: nextToken
+        });
+
+        if(!retval.errors && retval.data) {
+            console.log(`getActivities result for ${proto.name} (${proto.id}):`, retval);
+            actsArray = actsArray.concat(retval.data);
+        }
+        else {
+            console.log(retval.errors);
+            throw new Error(retval.errors?.map((el) => el.message).join(','));
+        }
+
+        nextToken = retval.nextToken ?? null;
+    } while(nextToken);
+
+    return actsArray;
 }
 
 export async function getAllActivitiesMapped(scheduleId: string, protos: ActivityPrototypeMap): Promise<AllActivities> {
@@ -65,21 +78,35 @@ export async function getActivitiesMapped(protos: ActivityPrototypeMap): Promise
 }
 
 export async function getGlobalActivities(scheduleId: string): Promise<LocalGlobalActivity[]> {
-    const retval = await client.models.GlobalActivity.list({
-        filter: {
-            scheduleId: {
-                eq: scheduleId
-            }
-        }
-    });
+    let nextToken: string | null = null;
 
-    if(!retval.errors && retval.data) {
-        return retval.data;
+    var retval;
+    var actsArray: LocalGlobalActivity[] = [];
+
+    // have to do this beacuse list method
+    do {
+        retval = await client.models.GlobalActivity.list({
+            filter: {
+                scheduleId: {
+                    eq: scheduleId
+                }
+            },
+            nextToken: nextToken
+        });
+
+        if(!retval.errors && retval.data) {
+            actsArray = actsArray.concat(retval.data);
+        }
+        else {
+            console.log(retval.errors);
+            throw new Error(retval.errors?.map((el) => el.message).join(', '));
+        }
+
+        nextToken = retval.nextToken ?? null;
     }
-    else {
-        console.log(retval.errors);
-        throw new Error(retval.errors?.map((el) => el.message).join(', '));
-    }
+    while(nextToken);
+
+    return actsArray;
 }
 
 export async function getGlobalActivitiesMapped(scheduleId: string): Promise<TimeMap<LocalGlobalActivity>> {

@@ -6,9 +6,28 @@ export type CreateSchedule = Schema['Schedule']['createType'];
 export type UpdateSchedule = Schema['Schedule']['updateType'];
 
 export async function getSchedules(): Promise<Schedule[]> {
-    const { data: items } = await client.models.Schedule.list();
+    let nextToken: string | null = null;
 
-    return items;
+    var retval;
+    var schedulesArray: Schedule[] = [];
+
+    do {
+        retval = await client.models.Schedule.list({
+            nextToken: nextToken
+        });
+
+        if(!retval.errors && retval.data) {
+            schedulesArray = schedulesArray.concat(retval.data);
+        }
+        else {
+            console.log(retval.errors);
+            throw new Error(retval.errors?.map((el) => el.message).join(','));
+        }
+
+        nextToken = retval.nextToken ?? null;
+    } while(nextToken);
+
+    return schedulesArray;
 }
 
 

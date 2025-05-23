@@ -9,25 +9,38 @@ export type ActivityPrototypeMap = {
 }
 
 export async function getActivityPrototypes(scheduleId: string): Promise<ActivityPrototype[]> {
-    const { data: items, errors } = await client.models.ActivityPrototype.list({
-        filter: {
-            scheduleId: {
-                eq: scheduleId
-            }
+
+    let nextToken: string | null = null;
+
+    var retval;
+    var protosArray: ActivityPrototype[] = [];
+
+    // have to do this beacuse list method paginates
+    do {
+        retval = await client.models.ActivityPrototype.list({
+            filter: {
+                scheduleId: {
+                    eq: scheduleId
+                }
+            },
+            nextToken: nextToken
+        });
+
+        if (!retval.errors && retval.data) {
+            protosArray = protosArray.concat(retval.data);
+        } else {
+            console.log(retval.errors);
+            throw new Error(retval.errors?.map((el) => el.message).join(','));
         }
-    });
 
-    if (!errors && items) {
+        nextToken = retval.nextToken ?? null;
+    } while(nextToken);
 
-        let elements = items.filter((act) => act.type === 'element').sort((a, b) => a.name.localeCompare(b.name));
-        let programs = items.filter((act) => act.type === 'program').sort((a, b) => a.name.localeCompare(b.name));
+    let elements = protosArray.filter((act) => act.type === 'element').sort((a, b) => a.name.localeCompare(b.name));
+    let programs = protosArray.filter((act) => act.type === 'program').sort((a, b) => a.name.localeCompare(b.name));
 
 
-        return elements.concat(programs);
-    } else {
-        console.log(errors);
-        throw new Error(errors?.map((el) => el.message).join(','));
-    }
+    return elements.concat(programs);
 }
 
 export async function getActivityPrototypesMapped(scheduleId: string): Promise<ActivityPrototypeMap> {
