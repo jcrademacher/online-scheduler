@@ -5,7 +5,7 @@ import { faGear, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useState } from 'react';
 import { Scheduler } from '../components/scheduler';
-import Settings from '../components/settings';
+import Settings from '../components/settings/settings';
 import moment from 'moment';
 import { AnalysisResult, analyzeSchedule } from '../analyzer';
 import { AnalysisPane } from './analysis-pane';
