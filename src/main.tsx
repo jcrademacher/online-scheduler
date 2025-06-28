@@ -10,8 +10,8 @@ Amplify.configure(outputs);
 
 import { QueryClient, QueryClientProvider, QueryCache } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-
 import { emitToast, ToastType } from "./components/notifications.tsx";
+
 
 const queryClient = new QueryClient({
     defaultOptions: {

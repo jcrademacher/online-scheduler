@@ -10,5 +10,10 @@ export default defineConfig({
         api: 'modern-compiler' // or "modern"
       }
     }
+  },
+  build: {
+    rollupOptions: {
+      external: ['/favicon.ico', '/favicon-32x32.png']
+    }
   }
 })
